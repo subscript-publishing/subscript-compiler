@@ -3,23 +3,25 @@
 
 \img[width=500px center src=../static/drawings/matrix/vector-equation-of-a-line.png]
 
-\note[boxed]
-    \h3 Vector Equation of a Line
-    \p Given
-    \equation
+\note[boxed] {
+    \h3{Vector Equation of a Line}
+    Given
+    \equation {
         \colorB{P_1} = \begin{bmatrix} \colorB{x_1} & \colorB{y_1} & \colorB{z_1} \end{bmatrix}\\
         \colorC{P_2} = \begin{bmatrix} \colorC{x_2} & \colorC{y_2} & \colorC{z_2} \end{bmatrix}\\
-    \p We can define a vector between \colorB{P_1} and \colorC{P_2}
-    \equation
+    }
+    We can define a vector between \colorB{P_1} and \colorC{P_2}
+    \equation {
         \colorA{\overrightarrow{\Delta\mathsf{v}}} &= 
         \begin{bmatrix} \colorC{x_2} \\ \colorC{y_2} \\ \colorC{z_2} \end{bmatrix} -
         \begin{bmatrix} \colorB{x_1} \\ \colorB{y_1} \\ \colorB{z_1} \end{bmatrix} =
         \begin{bmatrix} \colorC{x_2}-\colorB{x_1} \\ \colorC{y_2}-\colorB{y_1} \\ \colorC{z_2}-\colorB{z_1} \end{bmatrix} =
         \begin{bmatrix} \colorA{\Delta_x} \\ \colorA{\Delta_y} \\ \colorA{\Delta_z} \end{bmatrix}
-    \h4 Therefore
-    \p The equation of a line in 3D space or `\mathbb{R}^3` can be defined VIA the following options
-    \equation
-        L &= \colorB{P_1} + t\cdot\colorA{\overrightarrow{\Delta\mathsf{v}}} \\
+    }
+    \h4{Therefore}
+    The equation of a line in 3D space or `\mathbb{R}^3` can be defined VIA the following options
+    \equation{
+        L &= \colorB{P_1} + t \cdot \colorA{\overrightarrow{\Delta\mathsf{v}}} \\
         \begin{bmatrix} x \\ y \\ z \end{bmatrix} &= 
         \begin{bmatrix} \colorB{x_1} \\ \colorB{y_1} \\ \colorB{z_1} \end{bmatrix} +
         t\begin{bmatrix} \colorA{\Delta_x} \\ \colorA{\Delta_y} \\ \colorA{\Delta_z} \end{bmatrix} =
@@ -29,28 +31,33 @@
         \begin{bmatrix} \colorB{x_1} + t\;\colorA{\Delta_x} \\ \colorB{y_1} + t\;\colorA{\Delta_y} \\ \colorB{z_1} + t\;\colorA{\Delta_z} \end{bmatrix}\\
         &= 
         \begin{bmatrix} \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) \\ \colorC{x_2} + t(\colorC{x_2}-\colorB{x_1}) \\ x_3 + t(\colorC{x_2}-\colorB{x_1}) \end{bmatrix}
-
-    \p That is
+    }
+    That is
     \equation {
         L &= \colorB{P_1} + t\cdot\colorA{\overrightarrow{\Delta\mathsf{v}}}\\
         \begin{bmatrix} x \\ y \\ z \end{bmatrix} &=
         \begin{bmatrix} \colorB{x_1} + t\;\colorA{\Delta_x} \\ \colorB{y_1} + t\;\colorA{\Delta_y} \\ \colorB{z_1} + t\;\colorA{\Delta_z} \end{bmatrix}
             = \begin{bmatrix} \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) \\ \colorB{y_1} + t(\colorC{y_2}-\colorB{y_1}) \\ \colorB{z_1} + t(\colorC{z_2}-\colorB{z_1}) \end{bmatrix}
     }
+}
 
-\note[boxed]
-    \h3 Parametric Equation of a Line
-    \equation
-        \underbrace{\begin{split}
-            x &= \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) = \colorB{x_1} + t\;\colorA{\Delta_x}\\
-            y &= \colorB{x_1} + t(\colorC{y_2}-\colorB{y_1}) = \colorB{y_1} + t\;\colorA{\Delta_y}\\
-            z &= \colorB{x_1} + t(\colorC{z_2}-\colorB{z_1}) = \colorB{z_1} + t\;\colorA{\Delta_z}
-        \end{split}}_{
-            r \;=\; r_0 \;+\; a \;=\; r_0 \;+\; t\,v
+\note[boxed] {
+    \h3{Parametric Equation of a Line}
+    \equation {
+        \underbrace{
+            \begin{split}
+                x &= \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) = \colorB{x_1} + t\;\colorA{\Delta_x}\\
+                y &= \colorB{x_1} + t(\colorC{y_2}-\colorB{y_1}) = \colorB{y_1} + t\;\colorA{\Delta_y}\\
+                z &= \colorB{x_1} + t(\colorC{z_2}-\colorB{z_1}) = \colorB{z_1} + t\;\colorA{\Delta_z}
+            \end{split}
+        }_{
+            r = r_0 + a = r_0 + t v
         }
+    }
+}
 
 \note[boxed]
-    \h3 Essentially
+    \h3{ Essentially}
     \equation L &= \colorB{P_1} + t\cdot\colorA{\overrightarrow{\Delta\mathsf{v}}}\;\;\forall t\in\mathbb{R}
     \p That is, `t` is the scaling factor. In a way, it's like it's a function of `t`, but also similar to the slope (`m`) in `y = mx + b`, except `m` (i.e. `t`) is parameterized.
     \hr 
@@ -59,7 +66,7 @@
         \vec{r} &= \vec{r_0} + \vec{a} = \vec{r_0} + t\vec{v}
     }
 
-\note[boxed]
+\note[boxed] {
     \h3 Symmetric Equation of a Line
     \equation {
         t &= \frac{x - \colorB{x_1}}{\colorC{x_2}-\colorB{x_1}} = \frac{x - \colorB{x_1}}{\colorA{\Delta_x}}\\
@@ -76,10 +83,10 @@
             &= \frac{y - \colorB{y_1}}{\colorC{y_2}-\colorB{y_1}}
             =  \frac{z - \colorB{z_1}}{\colorC{z_2}-\colorB{z_1}}
     }
-    \hr
-    \h4 Rationale
-    \p We rewrite `r = r_0 + a = r_0 + t v` in terms of `t`.
-    \p That is
+    \hr[]
+    \h4{Rationale}
+    We rewrite `r = r_0 + a = r_0 + t v` in terms of `t`.
+    That is
     \equation{
         x &= \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) = \colorB{x_1} + t\;\colorA{\Delta_x}\\
         t\;\colorA{\Delta_x}  &= x - \colorB{x_1} = t(\colorC{x_2}-\colorB{x_1})\\
@@ -91,27 +98,31 @@
         t\;\colorA{\Delta_z} &= z - \colorB{z_1} = t(\colorC{z_2}-\colorB{z_1}) \\
         t &= \frac{z - \colorB{z_1}}{\colorC{z_2}-\colorB{z_1}} = \frac{z - \colorB{z_1}}{\colorA{\Delta_z}}
     }
+}
 
 
-\h2 Parameterizations of a curve
+\h2{Parameterizations of a curve}
 
-\dt Parametrized curve
-\dd
+\dt{Parametrized curve}
+\dd {
     A curve in the plane is said to be parameterized if the
     set of coordinates on the curve, (x,y), are represented
     as functions of a variable t.
-\dd
+}
+\dd {
     A parametrized Curve is a path in the xy-plane traced out
     by the point `\left(x(t), y(t)\right)` as the parameter `t`
     ranges over an interval `I`.
-\dd
+}
+\dd {
     A parametrized Curve is a path in the xyz-plane traced out by
     the point `\left(x(t), y(t), z(t)\right)` as the parameter `t`
     ranges over an interval `I`.
+}
 
-\h2 Curvature Properties
+\h2{Curvature Properties}
 
-\note[boxed]
+\note[boxed] {
     \h3 Length of a Curve
     \equation {
         L &= \Long\\
@@ -119,7 +130,8 @@
             &= \short\\
             &\implies \text{some constant}
     }
-\!where
+}
+\!where {
     \Long => {
         \int_a^b \sqrt{
             \left(f^\prime(t)\right)^2
@@ -137,19 +149,21 @@
     \short => {
         \int_a^b ||\left(r^\prime(t)\right)||
     }
-\note[boxed]
-    \h3 The Arc Length Function
-    \p Suppose
-    \li Given some curve `C` defined by some vector `\vec{r}` in `\mathbb{R}^3`
-    \li where `r^\prime` is continuous and `C` is traversed exactly once as `t` increases from `a` to `b`
-    \p We can define it's arc length function VIA
+}
+\note[boxed] {
+    \h3{The Arc Length Function}
+    Suppose
+    \li{Given some curve `C` defined by some vector `\vec{r}` in `\mathbb{R}^3`}
+    \li{where `r^\prime` is continuous and `C` is traversed exactly once as `t` increases from `a` to `b`}
+    We can define it's arc length function VIA
     \equation {
         S(t)
             &= \Long\\
             &= \AltLong\\
             &= \short
     }
-\!where
+}
+\!where {
     \Long => {
         \int_a^t \sqrt{
             \left(f^\prime(u)\right)^2
@@ -167,4 +181,44 @@
     \short => {
         \int_a^t ||\left(r^\prime(u)\right)||
     }
+}
 
+
+
+
+
+\A {
+    \AA_1 {
+        \AAA_1 {
+            Hello World
+        }
+    }
+    \AA_2 {
+        \AAA_2 {
+            SECOND
+        }
+    }
+    \AA_3 {
+        \AAA {
+            THIRD
+        }
+    }
+}
+
+\B {
+    \BB_1 {
+        \BBB {
+            SECOND
+        }
+    }
+    \BB_2 {
+        \BBB_2_1 {
+            SECOND
+        }
+        \BBB_2_3 {
+            SECOND
+        }
+    }
+}
+
+\img[width=500px]{}
