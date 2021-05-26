@@ -6,5 +6,5 @@ pub mod frontend;
 fn main() {
     // ast::run();
     // backend::run();
-    frontend::run();
+    frontend::parser::run();
 }

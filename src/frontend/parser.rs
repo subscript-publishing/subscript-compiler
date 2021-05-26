@@ -1,51 +1,17 @@
+//! The parser herein is supposed to meet the following criteria:
+//! * real-time parsing (suitable for IDE syntax highlighting).
+//! * zero-copy parsing (only copying pointers).
+//! * fault tolerant parsing; again, so it can be used in IDE/text editors.
+//! Eventually I’d like to support incremental parsing as well. 
 use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
+use crate::frontend::data::*;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // BASICS
 ///////////////////////////////////////////////////////////////////////////////
-
-#[derive(Debug, Clone, PartialEq, PartialOrd, Hash, Eq)]
-pub struct Symbol<'a>(Cow<'a, str>);
-
-pub static TOKEN_SET: &'static [&'static str] = &["\\", "[", "]", "{", "}", "(", ")", "=>", "_", "^"];
-
-fn get_end_kind_for(begin_kind: &str) -> &str {
-    match begin_kind {
-        "{" => "}",
-        "[" => "]",
-        "(" => ")",
-        _ => unreachable!()
-    }
-}
-
-fn get_begin_kind_for(end_kind: &str) -> &str {
-    match end_kind {
-        "}" => "{",
-        "]" => "[",
-        ")" => "(",
-        _ => unreachable!()
-    }
-}
-
-pub fn is_token<'a>(value: &'a str) -> bool {
-    for tk in TOKEN_SET {
-        if *tk == value {
-            return true;
-        }
-    }
-    false
-}
-
-impl<'a> Symbol<'a> {
-    pub fn token_set() -> HashSet<&'static str> {
-        HashSet::from_iter(TOKEN_SET.to_owned())
-    }
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum EnclosureKind<'a> {
@@ -81,12 +47,6 @@ pub enum Node<'a> {
     Token(Symbol<'a>),
     Enclosure(Enclosure<'a>),
     String(Cow<'a, str>),
-}
-
-#[derive(Debug, Clone)]
-struct State<'a> {
-    index: usize,
-    word: &'a str,
 }
 
 struct Zipper<T> {
@@ -272,11 +232,39 @@ fn break_up<'a>(word: &'a str) -> Vec<&'a str> {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// PARSER ENTRYPOINT
+///////////////////////////////////////////////////////////////////////////////
+
+pub fn run_parser_internal_ast<'a>(source: &'a str) -> Vec<Node<'a>> {
+    let source = include_str!("../../source.txt");
+    let words = {
+        let mut index = 0;
+        source
+            .split_whitespace()
+            .flat_map(|word| -> Vec<(usize, &str)> {
+                break_up(word)
+                    .into_iter()
+                    .map(|sub| {
+                        let ix = index;
+                        let current = sub;
+                        index = index + sub.len();
+                        (ix, sub)
+                    })
+                    .collect()
+            })
+            .filter(|x| !x.1.is_empty())
+            .collect::<Vec<_>>()
+    };
+    feed_processor(words)
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 // DEV
 ///////////////////////////////////////////////////////////////////////////////
 
 pub fn run() {
-    let source = include_str!("../source.txt");
+    let source = include_str!("../../source.txt");
     let words = {
         let mut index = 0;
         source
