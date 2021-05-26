@@ -4,7 +4,7 @@ use std::collections::{VecDeque, LinkedList};
 use crate::parser_utils;
 
 pub mod ast;
-use ast::{Ast, Block, Content};
+use ast::{Ast, Block, Content, ChildList};
 
 ///////////////////////////////////////////////////////////////////////////////
 // PARSE NODE
@@ -95,6 +95,12 @@ pub struct TextMode {
     pub start_index: usize,
 }
 
+#[derive(Debug, Clone)]
+pub struct ParenMode<'a> {
+    pub start_index: usize,
+    pub children: LinkedList<Node<'a>>,
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // STACK
 ///////////////////////////////////////////////////////////////////////////////
@@ -103,6 +109,7 @@ pub struct TextMode {
 enum State<'a> {
     NameMode(NameMode<'a>),
     SquareBracketMode(SquareBracketMode<'a>),
+    ParenMode(ParenMode<'a>),
     HeaderMode(HeaderMode<'a>),
     CurlyBraceMode(CurlyBraceMode<'a>),
     TextMode(TextMode),
@@ -120,6 +127,9 @@ impl<'a> State<'a> {
     }
     fn is_square_bracket_mode(&self) -> bool {
         self.unwrap_square_bracket_mode().is_some()
+    }
+    fn is_paren_mode(&self) -> bool {
+        self.unwrap_paren_mode().is_some()
     }
     fn is_text_mode(&self) -> bool {
         self.unwrap_text_mode().is_some()
@@ -146,6 +156,12 @@ impl<'a> State<'a> {
     fn unwrap_square_bracket_mode(&self) -> Option<SquareBracketMode> {
         match self {
             State::SquareBracketMode(x) => Some(x.clone()),
+            _ => None
+        }
+    }
+    fn unwrap_paren_mode(&self) -> Option<ParenMode> {
+        match self {
+            State::ParenMode(x) => Some(x.clone()),
             _ => None
         }
     }
@@ -213,6 +229,17 @@ impl<'a> Stack<'a> {
         }
         None
     }
+    fn pop_paren_mode(&mut self) -> Option<ParenMode<'a>> {
+        for (ix,entry) in self.0.iter().enumerate() {
+            if entry.is_paren_mode() {
+                match self.0.remove(ix).unwrap() {
+                    State::ParenMode(x) => return Some(x),
+                    _ => panic!()
+                }
+            }
+        }
+        None
+    }
     fn pop_header_mode(&mut self) -> Option<HeaderMode<'a>> {
         for (ix,entry) in self.0.iter().enumerate() {
             if entry.is_header_mode() {
@@ -267,8 +294,7 @@ mod helpers {
     ) -> Result<(), ()> {
         if (&source[ix..]).trim().is_empty() {
             return Ok(())
-        }
-        if let Some(text_node) = stack.pop_text_mode() {
+        } if let Some(text_node) = stack.pop_text_mode() {
             stack.push(State::TextMode(text_node));
         } else {
             stack.push(State::TextMode(TextMode {
@@ -358,32 +384,49 @@ mod helpers {
         }
         for txt in stack.filter(|x| x.is_text_mode()) {
             let txt = txt.unwrap_text_mode().unwrap();
-            println!("TXT: {:?}", txt);
         }
     }
+
     pub fn end_name_mode_if_present<'a, 'b>(
         source: &'a str,
         ix: usize,
         stack: &'b mut Stack<'a>,
         top_level: &'b mut LinkedList<Node<'a>>,
+        transition: TransitionTo,
     ) {
-        if let Some(NameMode{start_index, arguments})  = stack.pop_name_mode() {
-            let name = &source[start_index..ix];
-            let call = CurlyBraceMode {
-                header: Some(HeaderMode {
-                    name_start_index: start_index,
-                    name,
-                    arguments,
-                }),
-                start_index: start_index,
-                children: Default::default(),
-            };
-            let node = Node::Call {
-                start: start_index,
-                end: ix,
-                call,
-            };
-            helpers::add_to_parent(node, stack, top_level);
+        match transition {
+            TransitionTo::BeginPartialHeaderNode => {
+                if let Some(NameMode{start_index, arguments})  = stack.pop_name_mode() {
+                    let name = &source[start_index..ix];
+                    let header = HeaderMode {
+                        name_start_index: start_index,
+                        name,
+                        arguments,
+                    };
+                    stack.push(State::HeaderMode(header));
+                }
+            }
+            TransitionTo::BeginTextMode => {
+                if let Some(NameMode{start_index, arguments})  = stack.pop_name_mode() {
+                    let name = &source[start_index..ix];
+                    let call = CurlyBraceMode {
+                        header: Some(HeaderMode {
+                            name_start_index: start_index,
+                            name,
+                            arguments,
+                        }),
+                        start_index: start_index,
+                        children: Default::default(),
+                    };
+                    let node = Node::Call {
+                        start: start_index,
+                        end: ix,
+                        call,
+                    };
+                    helpers::add_to_parent(node, stack, top_level);
+                    helpers::start_text_mode(source, ix, stack);
+                }
+            }
         }
     }
     pub fn is_in_name_mode<'a, 'b>(stack: &'b mut Stack<'a>) -> bool {
@@ -394,6 +437,11 @@ mod helpers {
             false
         }
     }
+}
+
+pub enum TransitionTo {
+    BeginPartialHeaderNode,
+    BeginTextMode,
 }
 
 fn tick<'a, 'b>(
@@ -417,8 +465,9 @@ fn tick<'a, 'b>(
             helpers::start_text_mode(source, ix + 1, stack);
         }
         '^' => {
-            helpers::end_name_mode_if_present(source, ix, stack, top_level);
+            // let trans_to: Option<TransitionTo> = None;
             helpers::end_text_mode(source, ix, stack, top_level);
+            helpers::end_name_mode_if_present(source, ix, stack, top_level, TransitionTo::BeginTextMode);
             let node = Node::Token(Token(
                 &source[ix..=ix]
             ));
@@ -426,20 +475,50 @@ fn tick<'a, 'b>(
             helpers::start_text_mode(source, ix + 1, stack);
         }
         '=' if next_char == Some(">") => {
-            helpers::end_name_mode_if_present(source, ix, stack, top_level);
             helpers::end_text_mode(source, ix, stack, top_level);
+            helpers::end_name_mode_if_present(
+                source,
+                ix,
+                stack,
+                top_level,
+                TransitionTo::BeginTextMode
+            );
             let node = Node::Token(Token(
                 &source[ix..=ix + 1]
             ));
             helpers::add_to_parent(node, stack, top_level);
             helpers::start_text_mode(source, ix + 2, stack);
         }
+        // '(' => {
+        //     helpers::end_text_mode(source, ix, stack, top_level);
+        //     stack.push(State::ParenMode(ParenMode{
+        //         start_index: ix,
+        //         children: Default::default(),
+        //     }));
+        //     helpers::start_text_mode(source, ix, stack);
+        // }
+        // ')' => {
+        //     helpers::end_text_mode(source, ix, stack, top_level);
+        //     let ParenMode { start_index, children } = stack.pop_paren_mode().unwrap();
+            
+        // }
         ' ' if helpers::is_in_name_mode(stack) => {
-            helpers::end_name_mode_if_present(source, ix, stack, top_level);
-            helpers::start_text_mode(source, ix, stack);
+            helpers::end_name_mode_if_present(
+                source,
+                ix,
+                stack,
+                top_level,
+                TransitionTo::BeginPartialHeaderNode
+            );
         }
         '\\' if next_char != Some("\\") => {
-            helpers::end_name_mode_if_present(source, ix, stack, top_level);
+            helpers::end_name_mode_if_present(
+                source,
+                ix,
+                stack,
+                top_level,
+                TransitionTo::BeginTextMode
+            );
             helpers::end_text_mode(source, ix, stack, top_level);
             // CHECKS
             helpers::cleanup_stack_errors(
@@ -630,21 +709,45 @@ fn run_internal_parser<'a>(source: &'a str) -> LinkedList<Node<'a>> {
     top_level
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// PARSE TREE TO **NORMALIZED AST** TREE
+///////////////////////////////////////////////////////////////////////////////
+
 fn parse_rewrite_rules<'a>(node: ast::Ast<'a>) -> Option<Vec<(ast::Ast<'a>, ast::Ast<'a>)>> {
     assert!(node.is_name("!where"));
-    let mut res = Vec::new();
+    let mut rewrite_rules = Vec::new();
     let block: ast::Block = node.into_block()?;
-    for child in block.children {
-        println!("rewrite_rule {:?}", child);
+    let children = block.children.0;
+    for ix in 0..children.len() {
+        // VALID IX
+        if ix == 0 {continue;}
+        // GET LEFT AND RIGHT NODES
+        let left = children.get(ix - 1);
+        let right = children.get(ix + 1);
+        if left.is_none() || right.is_none() {
+            continue;
+        }
+        let left = left.unwrap();
+        let current = children.get(ix).unwrap();
+        let right = right.unwrap();
+        // CHECK LEFT AND RIGHT NODES
+        if !left.is_block() || !right.is_block() {
+            continue;
+        }
+        // IS MAP TOKEN
+        if !current.token_matches("=>") {
+            continue;
+        }
+        // GO!
+        rewrite_rules.push((left.clone(), right.clone()));
     }
-    Some(res)
+    Some(rewrite_rules)
 }
 
-fn normalize_children<'a>(xs: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
+fn normalize_rewrite_rules<'a>(xs: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
     let mut children: LinkedList<ast::Ast> = LinkedList::default();
-    for child in xs {
+    for mut child in xs {
         if child.is_name("!where") {
-            println!("YES");
             if let Some(mut last_node) = children.pop_back() {
                 if let Some(mut last_node) = last_node.unpack_block_mut() {
                     if let Some(rewrite_rules) = parse_rewrite_rules(child) {
@@ -663,16 +766,47 @@ fn normalize_children<'a>(xs: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
     children
 }
 
-fn transform<'a>(node: Node<'a>) -> ast::Ast<'a> {
+fn normalize_repeated_blocks<'a>(xs: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
+    let mut children: LinkedList<ast::Ast> = LinkedList::default();
+    for mut child in xs.into_iter() {
+        if let Some(block) = child.unpack_block_mut() {
+            if block.is_anonymous_block() {
+                if let Some(mut last_node) = children.pop_back() {
+                    if let Some(mut last_node) = last_node.unpack_block_mut() {
+                        if last_node.name.is_some() {
+                            last_node.children.0.append(&mut block.children.0);
+                        }
+                    }
+                    children.push_back(last_node);
+                    continue;
+                }
+            }
+        }
+        children.push_back(child);
+    }
+    let children = children
+        .into_iter()
+        .collect::<Vec<_>>();
+    children
+}
+
+fn normalize_children<'a>(xs: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
+    let xs = normalize_repeated_blocks(xs);
+    let xs = normalize_rewrite_rules(xs);
+    xs
+}
+
+fn transform<'a>(node: Node<'a>) -> Option<ast::Ast<'a>> {
     match node {
         Node::Call{start, end, mut call} => {
             let children = call.children
                 .into_iter()
-                .map(|child| transform(child))
+                .filter_map(|child| transform(child))
                 .collect();
             let children = normalize_children(children);
+            let children = ChildList(children);
             let rewrite_rules = Vec::new();
-            match call.header {
+            let result = match call.header {
                 Some(HeaderMode { name_start_index, name, arguments }) => {
                     ast::Ast::Block(ast::Block {
                         name: Some(name),
@@ -689,17 +823,38 @@ fn transform<'a>(node: Node<'a>) -> ast::Ast<'a> {
                         rewrite_rules,
                     })
                 }
-            }
+            };
+            Some(result)
         }
         Node::Token(token) => {
-            ast::Ast::Token(token.0)
+            Some(ast::Ast::Token(token.0))
         }
         Node::Text{start, end, string} => {
-            ast::Ast::Content(ast::Content {
-                string,
-            })
+            let trimmed = string.trim();
+            if trimmed.is_empty() {
+                None
+            } else {
+                Some(ast::Ast::Content(ast::Content {
+                    string: trimmed,
+                }))
+            }
         }
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// PARSER ENTRYPOINT
+///////////////////////////////////////////////////////////////////////////////
+
+pub fn run_parser<'a>(source: &'a str) -> Vec<Ast<'a>> {
+    let source = include_str!("../source.txt");
+    let result = run_internal_parser(source);
+    // println!("result: {:#?}", result);
+    let result = result
+        .into_iter()
+        .filter_map(|x| transform(x))
+        .collect::<Vec<_>>();
+    normalize_children(result)
 }
 
 
@@ -709,13 +864,16 @@ fn transform<'a>(node: Node<'a>) -> ast::Ast<'a> {
 
 pub fn run() {
     let source = include_str!("../source.txt");
-    let result = run_internal_parser(source);
-    let result = result
-        .into_iter()
-        .map(|x| transform(x))
-        .collect::<Vec<_>>();
-    let result = normalize_children(result);
+    let result = run_parser(source);
     for node in result {
-        // println!("{:#?}", node);
+        println!("{:#?}", node);
     }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// TEST
+///////////////////////////////////////////////////////////////////////////////
+
+mod test {
+
 }

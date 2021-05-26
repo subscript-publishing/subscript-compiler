@@ -1,9 +1,12 @@
 #![allow(unused)]
 pub mod parser;
 pub mod parser_utils;
-pub mod ast;
+pub mod backend;
+pub mod codegen;
+pub mod frontend;
 
 fn main() {
     // ast::run();
-    parser::run();
+    // backend::run();
+    frontend::run();
 }

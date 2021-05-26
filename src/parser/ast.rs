@@ -2,12 +2,41 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::collections::{VecDeque, LinkedList};
 
+///////////////////////////////////////////////////////////////////////////////
+// AST VEC
+///////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Clone)]
+pub struct ChildList<'a>(pub Vec<Ast<'a>>);
+
+impl<'a> ChildList<'a> {
+    // pub fn into_zipper(&self, f: impl Fn(
+    //     Ast<'a>,
+    //     Ast<'a>,
+    //     Ast<'a>
+    // )) {
+
+    // }
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// GENERAL AST
+///////////////////////////////////////////////////////////////////////////////
+
 #[derive(Debug, Clone)]
 pub struct Block<'a> {
     pub name: Option<&'a str>,
     pub parameters: Option<&'a str>,
-    pub children: Vec<Ast<'a>>,
+    pub children: ChildList<'a>,
     pub rewrite_rules: Vec<(Ast<'a>, Ast<'a>)>,
+}
+
+impl<'a> Block<'a> {
+    pub fn is_anonymous_block(&self) -> bool {
+        self.name == None
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -26,24 +55,28 @@ pub enum Ast<'a> {
 }
 
 impl<'a> Ast<'a> {
-    // pub fn match_block(
-    //     &self,
-    //     name: &str,
-    // ) {
-        
-    // }
-
+    pub fn is_anonymous_block(&self) -> bool {
+        self.unpack_block()
+            .map(|block| {
+                block.name == None
+            })
+            .unwrap_or(false)
+    }
     pub fn is_name(&self, name: &str) -> bool {
         self.unpack_block()
             .and_then(|x| x.name)
             .map(|x| {
-                println!("x: {}", x);
                 if let Some(x) = x.strip_prefix("\\") {
                     x == name
                 } else {
                     x == name
                 }
             })
+            .unwrap_or(false)
+    }
+    pub fn token_matches(&self, value: &str) -> bool {
+        self.unpack_token()
+            .map(|x| x == value)
             .unwrap_or(false)
     }
     pub fn is_block(&self) -> bool {
@@ -108,7 +141,37 @@ impl<'a> Ast<'a> {
             _ => None
         }
     }
+    pub fn to_backend(self) -> crate::backend::ast::Ast {
+        use crate::backend::ast;
+        use std::borrow::ToOwned;
+        match self {
+            Ast::Block(node) => {
+                let children = node.children.0
+                    .into_iter()
+                    .map(Self::to_backend)
+                    .collect::<Vec<_>>();
+                let children = ast::ChildList(children);
+                let rewrite_rules = node.rewrite_rules
+                    .into_iter()
+                    .map(|(x, y)| (x.to_backend(), y.to_backend()))
+                    .collect();
+                ast::Ast::Block(ast::Block{
+                    name: node.name.map(ToOwned::to_owned),
+                    parameters: node.parameters.map(ToOwned::to_owned),
+                    children,
+                    rewrite_rules,
+                })
+            }
+            Ast::Content(node) => {
+                ast::Ast::Content(ast::Content::new(node.string))
+            }
+            Ast::Token(node) => {
+                ast::Ast::Token(node.to_owned())
+            }
+        }
+    }
 }
+
 
 #[derive(Debug, Clone)]
 pub enum Math {

@@ -1,0 +1,52 @@
+\note[boxed] {
+    \h3{Vector Equation of a Line}
+    Given
+    \equation {
+        \P_1 = \begin{bmatrix} x_1 & y_1 & z_1 \end{bmatrix}
+        \P_2 = \begin{bmatrix} x_2 & y_2 & z_2 \end{bmatrix}
+    }
+    We can define a vector between \P_1 and \P_2
+    \equation{
+        \overrightarrow{\Delta\mathsf{v}} &= 
+        \begin{bmatrix} x_2 \\ y_2 \\ z_2 \end{bmatrix} -
+        \begin{bmatrix} x_1 \\ y_1 \\ z_1 \end{bmatrix} =
+        \begin{bmatrix} x_2-x_1 \\ y_2-y_1 \\ z_2-z_1 \end{bmatrix} =
+        \begin{bmatrix} \Delta_x \\ \Delta_y \\ \Delta_z \end{bmatrix}
+    }
+    \h4{Therefore}
+    The equation of a line in 3D space or `\mathbb{R}^3` can be defined VIA the following options
+    \equation{
+        L &= \P_1 + t \cdot \overrightarrow{\Delta\mathsf{v}} \\
+        \begin{bmatrix} x \\ y \\ z \end{bmatrix} &= 
+        \begin{bmatrix} x_1 \\ y_1 \\ z_1 \end{bmatrix} +
+        t\begin{bmatrix} \Delta_x \\ \Delta_y \\ \Delta_z \end{bmatrix} =
+        \begin{bmatrix} x_1 \\ y_1 \\ z_1 \end{bmatrix} +
+        \begin{bmatrix} t\;\Delta_x \\ t\;\Delta_y \\ t\;\Delta_z \end{bmatrix} \\
+        &= 
+        \begin{bmatrix} x_1 + t\;\Delta_x \\ y_1 + t\;\Delta_y \\ z_1 + t\;\Delta_z \end{bmatrix}\\
+        &= 
+        \begin{bmatrix} x_1 + t(x_2-x_1) \\ x_2 + t(x_2-x_1) \\ x_3 + t(x_2-x_1) \end{bmatrix}
+    }
+    That is
+    \equation {
+        L &= \P_1 + t\cdot\overrightarrow{\Delta\mathsf{v}}\\
+        \begin{bmatrix} x \\ y \\ z \end{bmatrix} &=
+        \begin{bmatrix} x_1 + t\;\Delta_x \\ y_1 + t\;\Delta_y \\ z_1 + t\;\Delta_z \end{bmatrix}
+            = \begin{bmatrix} x_1 + t(x_2-x_1) \\ y_1 + t(y_2-y_1) \\ z_1 + t(z_2-z_1) \end{bmatrix}
+    }
+}
+\!where {
+    \P_1 => {\colorA{P_1}}
+    \P_2 => {
+        \colorA{P_2}
+    }
+    \x_1 => {
+        \colorA{x_1}
+    }
+    \y_1 => {
+        \colorA{y_1}
+    }
+    \z_1 => {
+        \colorA{z_1}
+    }
+}
