@@ -3,51 +3,160 @@
 //! * zero-copy parsing (only copying pointers).
 //! * fault tolerant parsing; again, so it can be used in IDE/text editors.
 //! Eventually I’d like to support incremental parsing as well. 
+use std::rc::Rc;
 use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
+use crate::frontend;
 use crate::frontend::data::*;
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// BASICS
+// PARSER AST
 ///////////////////////////////////////////////////////////////////////////////
 
-#[derive(Debug, Clone)]
-pub enum EnclosureKind<'a> {
-    CurlyBrace,
-    SquareParens,
-    Parens,
-    Error {
-        open: &'a str,
-        close: &'a str,
-    },
-}
-
-impl<'a> EnclosureKind<'a> {
-    pub fn new(open: &'a str, close: &'a str) -> EnclosureKind<'a> {
-        match (open, close) {
-            ("{", "}") => EnclosureKind::CurlyBrace,
-            ("[", "]") => EnclosureKind::SquareParens,
-            ("(", ")") => EnclosureKind::Parens,
-            (open, close) => EnclosureKind::Error {open, close},
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Enclosure<'a> {
-    kind: EnclosureKind<'a>,
-    children: Vec<Node<'a>>,
-}
 
 #[derive(Debug, Clone)]
 pub enum Node<'a> {
-    Ident(Symbol<'a>),
-    Token(Symbol<'a>),
-    Enclosure(Enclosure<'a>),
-    String(Cow<'a, str>),
+    Ident(Atom<'a>),
+    Enclosure(Enclosure<'a, Node<'a>>),
+    String(Atom<'a>),
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// PARSER IR TO FRONTEND AST NORMALIZATION
+///////////////////////////////////////////////////////////////////////////////
+
+fn to_frontend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::frontend::ast::Ast<'a>> {
+    use crate::frontend;
+    let mut results: LinkedList<frontend::Ast> = LinkedList::new();
+    for child in children {
+        let mut last = results.back_mut();
+        let last_is_ident = last.as_ref().map(|x| x.is_ident()).unwrap_or(false);
+        let last_is_tag = last.as_ref().map(|x| x.is_tag()).unwrap_or(false);
+        // RETURN NONE IF CHILD IS ADDED TO SOME EXISTING NODE
+        let new_child = match child {
+            Node::Enclosure(node) if last_is_ident && node.is_square_parens() => {
+                let last = last.unwrap();
+                let mut name = last.clone().into_ident().unwrap();
+                let parameters = to_frontend_ir(node.children);
+                let new_node = frontend::Ast::Tag(frontend::Tag {
+                    name,
+                    parameters: Some(parameters),
+                    children: Vec::new(),
+                    rewrite_rules: Vec::new(),
+                });
+                *last = new_node;
+                None
+            }
+            Node::Enclosure(node) if last_is_ident && node.is_curly_brace() => {
+                let last = last.unwrap();
+                let mut name = last.clone().into_ident().unwrap();
+                let children = to_frontend_ir(node.children);
+                let new_node = frontend::Ast::Tag(frontend::Tag {
+                    name,
+                    parameters: None,
+                    children: children,
+                    rewrite_rules: Vec::new(),
+                });
+                *last = new_node;
+                None
+            }
+            Node::Enclosure(node) if last_is_tag && node.is_curly_brace() => {
+                let last = last.unwrap();
+                let mut block = last.clone().into_tag().unwrap();
+                let children = to_frontend_ir(node.children);
+                block.children.extend(children);
+                None
+            }
+            Node::Enclosure(node) => {
+                let children = to_frontend_ir(node.children);
+                let new_node = frontend::Ast::Enclosure(Enclosure{
+                    kind: node.kind,
+                    children,
+                });
+                Some(new_node)
+            }
+            Node::Ident(node) => {
+                let new_node = frontend::Ast::Ident(node);
+                Some(new_node)
+            }
+            Node::String(node) => {
+                let mut is_token = false;
+                for sym in frontend::data::TOKEN_SET {
+                    if *sym == &node {
+                        is_token = true;
+                        break;
+                    }
+                }
+                if is_token {
+                    Some(frontend::Ast::Token(node))
+                } else {
+                    Some(frontend::Ast::Content(node))
+                }
+            }
+        };
+        if let Some(new_child) = new_child {
+            results.push_back(new_child);
+        }
+    }
+    results.into_iter().collect()
+}
+
+
+fn into_rewrite_rules<'a>(
+    children: Vec<frontend::Ast<'a>>
+) -> Vec<frontend::RewriteRule<frontend::Ast<'a>>> {
+    let mut results = Vec::new();
+    for ix in 0..children.len() {
+        if ix == 0 {
+            continue;
+        }
+        let left = children.get(ix - 1);
+        let current = children
+            .get(ix)
+            .and_then(|x| x.unpack_token())
+            .filter(|x| *x == "=>");
+        let right = children.get(ix + 1);
+        match (left, current, right) {
+            (Some(left), Some(_), Some(right)) => {
+                results.push(frontend::RewriteRule {
+                    from: left.clone(),
+                    to: right.clone(),
+                })
+            }
+            _ => ()
+        }
+    }
+    results
+}
+
+fn normalize_ir<'a>(children: Vec<frontend::Ast<'a>>) -> Vec<frontend::Ast<'a>> {
+    let mut results = Vec::new();
+    for child in children {
+        if child.is_named_block("!where") {
+            let child = child.into_tag().unwrap();
+            let last = results  
+                .last_mut()
+                .and_then(frontend::Ast::unpack_tag_mut);
+            if let Some(last) = last {
+                let rewrite_rule = into_rewrite_rules(
+                    child.children,
+                );
+                last.rewrite_rules.extend(rewrite_rule);
+                continue;
+            }
+        } else {
+            results.push(child);
+        }
+    }
+    results
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// PARSER DATA TYPES
+///////////////////////////////////////////////////////////////////////////////
 
 struct Zipper<T> {
     left: Option<T>,
@@ -84,6 +193,10 @@ fn tick<'a>(
         zipper.right.map(|(_, x)| x),
     );
     match pattern {
+        (_, "\\", Some(next)) if next == &"{"  => (
+            Mode::Ident("[math]"),
+            ZipperConsumed::Current,
+        ),
         (_, "\\", Some(ident)) if !is_token(ident) => (
             Mode::Ident(ident),
             ZipperConsumed::Right
@@ -163,7 +276,7 @@ fn feed_processor<'a>(words: Vec<(usize, &'a str)>) -> Vec<Node<'a>> {
             }
             (Mode::Ident(ident), _) => {
                 let mut parent = enclosure_stack.back_mut().unwrap();
-                parent.1.push_back(Node::Ident(Symbol(Cow::Borrowed(ident))));
+                parent.1.push_back(Node::Ident(Atom::Borrowed(ident)));
             }
             (Mode::NoOP, _) => {
                 let mut parent = enclosure_stack.back_mut().unwrap();
@@ -235,8 +348,7 @@ fn break_up<'a>(word: &'a str) -> Vec<&'a str> {
 // PARSER ENTRYPOINT
 ///////////////////////////////////////////////////////////////////////////////
 
-pub fn run_parser_internal_ast<'a>(source: &'a str) -> Vec<Node<'a>> {
-    let source = include_str!("../../source.txt");
+fn run_parser_internal_ast<'a>(source: &'a str) -> Vec<Node<'a>> {
     let words = {
         let mut index = 0;
         source
@@ -258,12 +370,37 @@ pub fn run_parser_internal_ast<'a>(source: &'a str) -> Vec<Node<'a>> {
     feed_processor(words)
 }
 
+pub fn run_parser<'a>(source: &'a str) -> Vec<crate::frontend::Ast<'a>> {
+    let children = run_parser_internal_ast(source);
+    let children = to_frontend_ir(children);
+    let parameters = std::convert::identity;
+    let block = normalize_ir;
+    let rewrite_rules = std::convert::identity;
+    let transfomer = frontend::ast::ChildListTransformer {
+        parameters: Rc::new(parameters),
+        block: Rc::new(block),
+        rewrite_rules: Rc::new(rewrite_rules),
+        marker: std::marker::PhantomData
+    };
+    let node = frontend::Ast::Enclosure(frontend::Enclosure {
+        kind: frontend::EnclosureKind::Module,
+        children,
+    });
+    let node = node.child_list_transformer(Rc::new(transfomer));
+    match node {
+        frontend::Ast::Enclosure(frontend::Enclosure{kind: _, children}) => {
+            children
+        }
+        x => vec![x]
+    }
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // DEV
 ///////////////////////////////////////////////////////////////////////////////
 
-pub fn run() {
+pub fn dev() {
     let source = include_str!("../../source.txt");
     let words = {
         let mut index = 0;

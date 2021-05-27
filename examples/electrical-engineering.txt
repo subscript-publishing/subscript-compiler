@@ -1,0 +1,207 @@
+\h1{Basic Electrical Quantities}
+\note{
+    \h2{Charge}
+}
+\note{
+    \h2{Conductors and insulators}
+}
+\note{
+    \h2{Current}
+    \equation{
+        i &= \frac{\mathrm{d}q}{\mathrm{d}t}
+    }
+}
+\note{
+    \h2{Voltage}
+}
+\note{
+    \h2{Power}
+    Power is defined as the rate energy \{U} is transformed or transferred over time. We measure power in units of joules/second, also known as watts.
+    \equation {
+        \text{power} &= \frac{\mathrm{d}U}{\mathrm{d}t}
+    }
+    An electric circuit is capable of transferring power.
+    \li{Current is the rate of flow of charge}
+    \li{voltage measures the energy transferred per unit of charge}
+    We can insert these definitions into the equation for power:
+    \equation {
+        \text{power}
+            &= \frac{\mathrm{d}U}{\mathrm{d}t}\\
+            &= \frac{\mathrm{d}U}{\mathrm{d}q}\cdot\frac{\mathrm{d}q}{\mathrm{d}t}\\
+            &= v \cdot i
+    }
+    Electrical power is the product of voltage times current. in units of watts.
+}
+
+
+\h1{Standard Electrical Units}
+
+
+\note{
+    \h2{SI base units}
+    \table {
+        \row[head]{Name, Symbol, Quantity}
+        \row{
+            meter,
+            \{m},
+            length
+        }
+        \row{
+            kilogram,
+            \{\mathrm{kg}},
+            mass,
+        }
+        \row{
+            second,
+            \{\mathrm{s}},
+            time,
+        }
+        \row{
+            ampere,
+            \{\mathrm{A}},
+            electric current,
+        }
+        \row{
+            kelvin,
+            \{\mathrm{K}},
+            temperature,
+        }
+        \row{
+            candela,
+            \{\mathrm{cd}},
+            luminous intensity,
+        }
+        \row{
+            mole,
+            \{\mathrm{mol}},
+            amount of substance,
+        }
+    }
+}
+\note{
+    \h2{SI derived units used in electricity}
+    \table{
+        \row[head]{
+            Name
+            Symbol
+            Quantity
+            In terms of other SI units
+        }
+        \row{
+            coulomb,
+            \{C},
+            charge,
+            \{\mathrm{A}\cdot\mathrm{s}},
+        }
+        \row{
+            watt,
+            \{W},
+            power,
+            \{\frac{\mathrm{J}}{\mathrm{s}}},
+        }
+        \row{
+            volt,
+            \{V},
+            voltage (electric potential difference),
+            \{\frac{\mathrm{W}}{\mathrm{A}}},
+        }
+        \row{
+            ohm,
+            \{Ω},
+            resistance, impedance,
+            \{\frac{\mathrm{V}}{\mathrm{A}}},
+        }
+        \row{
+            farad,
+            \{F},
+            capacitance,
+            \{\frac{\mathrm{C}}{\mathrm{V}}},
+        }
+        \row{
+            henry,
+            \{H},
+            inductance,
+            \{\frac{\mathrm{Wb}}{\mathrm{A}}},
+        }
+        \row{
+            hertz,
+            \{Hz},
+            frequency,
+            \{s^{-1}},
+        }
+        \row{
+            siemens,
+            \{S},
+            conductance,
+            \{\frac{\mathrm{A}}{\mathrm{V}}} or \{\frac{\mathrm{1}}{\mathrm{Ω}}},
+        }
+        \row{
+            weber,
+            \{Wb},
+            magnetic flux,
+            \{\mathrm{V}\cdot\mathrm{s}},
+        }
+        \row{
+            tesla,
+            \{T},
+            magnetic field strength,
+            \{\frac{\mathrm{Wb}}{\mathrm{m^2}}},
+        }
+    }
+}
+
+\note{
+    \h2{Ampere}
+}
+\note{
+    \h2{Coulomb}
+}
+\note{
+    \h2{Electron charge}
+}
+\note{
+    \h2{Watt}
+}
+\note{
+    \h2{Volt}
+}
+\note{
+    \h2{Ohm}
+}
+
+\h1{Ideal Circuit Elements}
+\note{
+    \h2{Resistor (\{R})}
+    \equation{
+        v  = i \cdot R
+    }
+}
+\note{
+    \h2{Capacitor (\{C})}
+    \equation{
+        i = C \frac{\mathrm{d}v}{\mathrm{d}t}
+    }
+}
+\note{
+    \h2{Inductor (\{L})}
+    \equation{
+        v = L \cdot \frac{\mathrm{d}i}{\mathrm{d}t }
+    } 
+}
+
+\h1{Ideal Sources}
+\note{
+    \h2{Ideal Voltage Source}
+    \equation{
+        TODO
+    }
+}
+\note{
+    \h2{Ideal Current Source}
+    \equation{
+        TODO
+    }
+}
+
+
+

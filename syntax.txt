@@ -1,224 +1,217 @@
-\h1{Geometry}
-\h2{Definition of a Line}
+<h1>Basic Electrical Quantities</h1>
+<layout cols="3">
+    <note boxed>
+        <h2>Charge</h2>
+    </note>
+    <note boxed>
+        <h2>Conductors and insulators</h2>
+    </note>
+    <note boxed>
+        <h2>Current</h2>
+        <equation>
+            i &= \frac{\mathrm{d}q}{\mathrm{d}t}
+        </equation>
+    </note>
+    <note boxed>
+        <h2>Voltage</h2>
+    </note>
+    <note boxed>
+        <h2>Power</h2>
+        <p>Power is defined as the rate energy (<b>U</b>) is transformed or transferred over time. We measure power in units of joules/second, also known as watts.</p>
+        <equation>
+            \text{power} &= \frac{\mathrm{d}U}{\mathrm{d}t}
+        </equation>
+        <p>An electric circuit is capable of transferring power.</p>
+        <ul>
+            <li>Current is the rate of flow of charge</li>
+            <li>voltage measures the energy transferred per unit of charge</li>
+        </ul>
+        <p>We can insert these definitions into the equation for power:</p>
+        <equation>
+            \text{power}
+                &= \frac{\mathrm{d}U}{\mathrm{d}t}\\
+                &= \frac{\mathrm{d}U}{\mathrm{d}q}\cdot\frac{\mathrm{d}q}{\mathrm{d}t}\\
+                &= v \cdot i
+        </equation>
+        <p>Electrical power is the product of voltage times current. in units of watts.</p>
+    </note>
+</layout>
+<h1>Standard Electrical Units</h1>
+<layout cols="2">
+    <note>
+        <h2>SI base units</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Symbol</th>
+                <th>Quantity</th>
+            </tr>
+            <tr>
+                <td>meter</td>
+                <td><tex>\mathrm{m}</tex></td>
+                <td>length</td>
+            </tr>
+            <tr>
+                <td>kilogram</td>
+                <td><tex>\mathrm{kg}</tex></td>
+                <td>mass</td>
+            </tr>
+            <tr>
+                <td>second</td>
+                <td><tex>\mathrm{s}</tex></td>
+                <td>time</td>
+            </tr>
+            <tr>
+                <td>ampere</td>
+                <td><tex>\mathrm{A}</tex></td>
+                <td>electric current</td>
+            </tr>
+            <tr>
+                <td>kelvin</td>
+                <td><tex>\mathrm{K}</tex></td>
+                <td>temperature</td>
+            </tr>
+            <tr>
+                <td>candela</td>
+                <td><tex>\mathrm{cd}</tex></td>
+                <td>luminous intensity</td>
+            </tr>
+            <tr>
+                <td>mole</td>
+                <td><tex>\mathrm{mol}</tex></td>
+                <td>amount of substance</td>
+            </tr>
+        </table>
+    </note>
+    <note>
+        <h2>SI derived units used in electricity</h2>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Symbol</th>
+                <th>Quantity</th>
+                <th>In terms of other SI units</th>
+            </tr>
+            <tr>
+                <td>coulomb</td>
+                <td><b>C</b></td>
+                <td>charge</td>
+                <td><tex>\mathrm{A}\cdot\mathrm{s}</tex></td>
+            </tr>
+            <tr>
+                <td>watt</td>
+                <td><b>W</b></td>
+                <td>power</td>
+                <td><tex>\frac{\mathrm{J}}{\mathrm{s}}</tex></td>
+            </tr>
+            <tr>
+                <td>volt</td>
+                <td><b>V</b></td>
+                <td>voltage (electric potential difference)</td>
+                <td><tex>\frac{\mathrm{W}}{\mathrm{A}}</tex></td>
+            </tr>
+            <tr>
+                <td>ohm</td>
+                <td><b>Ω</b></td>
+                <td>resistance, impedance</td>
+                <td><tex>\frac{\mathrm{V}}{\mathrm{A}}</tex></td>
+            </tr>
+            <tr>
+                <td>farad</td>
+                <td><b>F</b></td>
+                <td>capacitance</td>
+                <td><tex>\frac{\mathrm{C}}{\mathrm{V}}</tex></td>
+            </tr>
+            <tr>
+                <td>henry</td>
+                <td><b>H</b></td>
+                <td>inductance</td>
+                <td><tex>\frac{\mathrm{Wb}}{\mathrm{A}}</tex></td>
+            </tr>
+            <tr>
+                <td>hertz</td>
+                <td><b>Hz</b></td>
+                <td>frequency</td>
+                <td><tex>s^{-1}</tex></td>
+            </tr>
+            <tr>
+                <td>siemens</td>
+                <td><b>S</b></td>
+                <td>conductance</td>
+                <td><tex>\frac{\mathrm{A}}{\mathrm{V}}</tex> or <tex>\frac{\mathrm{1}}{\mathrm{Ω}}</tex></tex></td>
+            </tr>
+            <tr>
+                <td>weber</td>
+                <td><b>Wb</b></td>
+                <td>magnetic flux</td>
+                <td><tex>\mathrm{V}\cdot\mathrm{s}</tex></td>
+            </tr>
+            <tr>
+                <td>tesla</td>
+                <td><b>T</b></td>
+                <td>magnetic field strength</td>
+                <td><tex>\frac{\mathrm{Wb}}{\mathrm{m^2}}</tex></td>
+            </tr>
+        </table>
+    </note>
+</layout>
+<layout cols="2">
+    <note boxed>
+        <h3>Ampere</h3>
+    </note>
+    <note boxed>
+        <h3>Coulomb</h3>
+    </note>
+    <note boxed>
+        <h3>Electron charge</h3>
+    </note>
+    <note boxed>
+        <h3>Watt</h3>
+    </note>
+    <note boxed>
+        <h3>Volt</h3>
+    </note>
+    <note boxed>
+        <h3>Ohm</h3>
+    </note>
+</layout>
 
-\img[width=500px center src=../static/drawings/matrix/vector-equation-of-a-line.png]
+<h1>Ideal Circuit Elements</h1>
+<layout cols="3">
+    <note boxed>
+        <h2>Resistor (<b>R</b>)</h2>
+        <equation>
+            v = i \cdot R
+        </equation>
+    </note>
+    <note boxed>
+        <h2>Capacitor (<b>C</b>)</h2>
+        <equation>
+            i = C \frac{\mathrm{d}v}{\mathrm{d}t}
+        </equation>
+    </note>
+    <note boxed>
+        <h2>Inductor (<b>L</b>)</h2>
+        <equation>
+            v = L \cdot \frac{\mathrm{d}i}{\mathrm{d}t }
+        </equation> 
+    </note>
+</layout>
 
-\note[boxed] {
-    \h3{Vector Equation of a Line}
-    Given
-    \equation {
-        \colorB{P_1} = \begin{bmatrix} \colorB{x_1} & \colorB{y_1} & \colorB{z_1} \end{bmatrix}\\
-        \colorC{P_2} = \begin{bmatrix} \colorC{x_2} & \colorC{y_2} & \colorC{z_2} \end{bmatrix}\\
-    }
-    We can define a vector between \colorB{P_1} and \colorC{P_2}
-    \equation {
-        \colorA{\overrightarrow{\Delta\mathsf{v}}} &= 
-        \begin{bmatrix} \colorC{x_2} \\ \colorC{y_2} \\ \colorC{z_2} \end{bmatrix} -
-        \begin{bmatrix} \colorB{x_1} \\ \colorB{y_1} \\ \colorB{z_1} \end{bmatrix} =
-        \begin{bmatrix} \colorC{x_2}-\colorB{x_1} \\ \colorC{y_2}-\colorB{y_1} \\ \colorC{z_2}-\colorB{z_1} \end{bmatrix} =
-        \begin{bmatrix} \colorA{\Delta_x} \\ \colorA{\Delta_y} \\ \colorA{\Delta_z} \end{bmatrix}
-    }
-    \h4{Therefore}
-    The equation of a line in 3D space or `\mathbb{R}^3` can be defined VIA the following options
-    \equation{
-        L &= \colorB{P_1} + t \cdot \colorA{\overrightarrow{\Delta\mathsf{v}}} \\
-        \begin{bmatrix} x \\ y \\ z \end{bmatrix} &= 
-        \begin{bmatrix} \colorB{x_1} \\ \colorB{y_1} \\ \colorB{z_1} \end{bmatrix} +
-        t\begin{bmatrix} \colorA{\Delta_x} \\ \colorA{\Delta_y} \\ \colorA{\Delta_z} \end{bmatrix} =
-        \begin{bmatrix} \colorB{x_1} \\ \colorB{y_1} \\ \colorB{z_1} \end{bmatrix} +
-        \begin{bmatrix} t\;\colorA{\Delta_x} \\ t\;\colorA{\Delta_y} \\ t\;\colorA{\Delta_z} \end{bmatrix} \\
-        &= 
-        \begin{bmatrix} \colorB{x_1} + t\;\colorA{\Delta_x} \\ \colorB{y_1} + t\;\colorA{\Delta_y} \\ \colorB{z_1} + t\;\colorA{\Delta_z} \end{bmatrix}\\
-        &= 
-        \begin{bmatrix} \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) \\ \colorC{x_2} + t(\colorC{x_2}-\colorB{x_1}) \\ x_3 + t(\colorC{x_2}-\colorB{x_1}) \end{bmatrix}
-    }
-    That is
-    \equation {
-        L &= \colorB{P_1} + t\cdot\colorA{\overrightarrow{\Delta\mathsf{v}}}\\
-        \begin{bmatrix} x \\ y \\ z \end{bmatrix} &=
-        \begin{bmatrix} \colorB{x_1} + t\;\colorA{\Delta_x} \\ \colorB{y_1} + t\;\colorA{\Delta_y} \\ \colorB{z_1} + t\;\colorA{\Delta_z} \end{bmatrix}
-            = \begin{bmatrix} \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) \\ \colorB{y_1} + t(\colorC{y_2}-\colorB{y_1}) \\ \colorB{z_1} + t(\colorC{z_2}-\colorB{z_1}) \end{bmatrix}
-    }
-}
-
-\note[boxed] {
-    \h3{Parametric Equation of a Line}
-    \equation {
-        \underbrace{
-            \begin{split}
-                x &= \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) = \colorB{x_1} + t\;\colorA{\Delta_x}\\
-                y &= \colorB{x_1} + t(\colorC{y_2}-\colorB{y_1}) = \colorB{y_1} + t\;\colorA{\Delta_y}\\
-                z &= \colorB{x_1} + t(\colorC{z_2}-\colorB{z_1}) = \colorB{z_1} + t\;\colorA{\Delta_z}
-            \end{split}
-        }_{
-            r = r_0 + a = r_0 + t v
-        }
-    }
-}
-
-\note[boxed]
-    \h3{ Essentially}
-    \equation L &= \colorB{P_1} + t\cdot\colorA{\overrightarrow{\Delta\mathsf{v}}}\;\;\forall t\in\mathbb{R}
-    \p That is, `t` is the scaling factor. In a way, it's like it's a function of `t`, but also similar to the slope (`m`) in `y = mx + b`, except `m` (i.e. `t`) is parameterized.
-    \hr 
-    \p Sometimes this will be (confusingly) denoted as
-    \equation {
-        \vec{r} &= \vec{r_0} + \vec{a} = \vec{r_0} + t\vec{v}
-    }
-
-\note[boxed] {
-    \h3 Symmetric Equation of a Line
-    \equation {
-        t &= \frac{x - \colorB{x_1}}{\colorC{x_2}-\colorB{x_1}} = \frac{x - \colorB{x_1}}{\colorA{\Delta_x}}\\
-        t &= \frac{y - \colorB{y_1}}{\colorC{y_2}-\colorB{y_1}} = \frac{y - \colorB{y_1}}{\colorA{\Delta_y}}\\
-        t &= \frac{z - \colorB{z_1}}{\colorC{z_2}-\colorB{z_1}} = \frac{z - \colorB{z_1}}{\colorA{\Delta_z}}
-    }
-    \p Therefore
-    \equation {
-        \frac{x - \colorB{x_1}}{\colorA{\Delta_x}}
-            &= \frac{y - \colorB{y_1}}{\colorA{\Delta_y}}
-            = \frac{z - \colorB{z_1}}{\colorA{\Delta_z}}
-        \\\\
-                \frac{x - \colorB{x_1}}{\colorC{x_2}-\colorB{x_1}}
-            &= \frac{y - \colorB{y_1}}{\colorC{y_2}-\colorB{y_1}}
-            =  \frac{z - \colorB{z_1}}{\colorC{z_2}-\colorB{z_1}}
-    }
-    \hr[]
-    \h4{Rationale}
-    We rewrite `r = r_0 + a = r_0 + t v` in terms of `t`.
-    That is
-    \equation{
-        x &= \colorB{x_1} + t(\colorC{x_2}-\colorB{x_1}) = \colorB{x_1} + t\;\colorA{\Delta_x}\\
-        t\;\colorA{\Delta_x}  &= x - \colorB{x_1} = t(\colorC{x_2}-\colorB{x_1})\\
-        t &= \frac{x - \colorB{x_1}}{\colorC{x_2}-\colorB{x_1}} = \frac{x - \colorB{x_1}}{\colorA{\Delta_x}} \\\\
-        y &= \colorB{y_1} + t(\colorC{y_2}-\colorB{y_1}) = \colorB{y_1} + t\;\colorA{\Delta_y}\\
-        t\;\colorA{\Delta_y}  &= y - \colorB{y_1} = t(\colorC{y_2}-\colorB{y_1})\\
-        t &= \frac{y - \colorB{y_1}}{\colorC{y_2}-\colorB{y_1}} = \frac{y - \colorB{y_1}}{\colorA{\Delta_y}} \\\\
-        z &= \colorB{z_1} + t(\colorC{z_2}-\colorB{z_1}) = \colorB{z_1} + t\;\colorA{\Delta_z}\\
-        t\;\colorA{\Delta_z} &= z - \colorB{z_1} = t(\colorC{z_2}-\colorB{z_1}) \\
-        t &= \frac{z - \colorB{z_1}}{\colorC{z_2}-\colorB{z_1}} = \frac{z - \colorB{z_1}}{\colorA{\Delta_z}}
-    }
-}
+<h1>Ideal Sources</h1>
+<layout cols="2">
+    <note boxed>
+        <h2>Ideal Voltage Source</h2>
+        <equation>
+            TODO
+        </equation>
+    </note>
+    <note boxed>
+        <h2>Ideal Current Source</h2>
+        <equation>
+            TODO
+        </equation>
+    </note>
+</layout>
 
 
-\h2{Parameterizations of a curve}
-
-\dt{Parametrized curve}
-\dd {
-    A curve in the plane is said to be parameterized if the
-    set of coordinates on the curve, (x,y), are represented
-    as functions of a variable t.
-}
-\dd {
-    A parametrized Curve is a path in the xy-plane traced out
-    by the point `\left(x(t), y(t)\right)` as the parameter `t`
-    ranges over an interval `I`.
-}
-\dd {
-    A parametrized Curve is a path in the xyz-plane traced out by
-    the point `\left(x(t), y(t), z(t)\right)` as the parameter `t`
-    ranges over an interval `I`.
-}
-
-\h2{Curvature Properties}
-
-\note[boxed] {
-    \h3 Length of a Curve
-    \equation {
-        L &= \Long\\
-            &= \AltLong\\
-            &= \short\\
-            &\implies \text{some constant}
-    }
-}
-\!where {
-    \Long => {
-        \int_a^b \sqrt{
-            \left(f^\prime(t)\right)^2
-            \left(g^\prime(t)\right)^2
-            \left(h^\prime(t)\right)^2
-        }
-    }
-    \AltLong => {
-        \int_a^b \sqrt{
-            \left(\frac{\mathrm{d}x}{\mathrm{d}t}\right)^2
-            \left(\frac{\mathrm{d}y}{\mathrm{d}t}\right)^2
-            \left(\frac{\mathrm{d}z}{\mathrm{d}t}\right)^2
-        }
-    }
-    \short => {
-        \int_a^b ||\left(r^\prime(t)\right)||
-    }
-}
-\note[boxed] {
-    \h3{The Arc Length Function}
-    Suppose
-    \li{Given some curve `C` defined by some vector `\vec{r}` in `\mathbb{R}^3`}
-    \li{where `r^\prime` is continuous and `C` is traversed exactly once as `t` increases from `a` to `b`}
-    We can define it's arc length function VIA
-    \equation {
-        S(t)
-            &= \Long\\
-            &= \AltLong\\
-            &= \short
-    }
-}
-\!where {
-    \Long => {
-        \int_a^t \sqrt{
-            \left(f^\prime(u)\right)^2
-            \left(g^\prime(u)\right)^2
-            \left(h^\prime(u)\right)^2
-        }
-    }
-    \AltLong => {
-        \int_a^t \sqrt{
-            \left(\frac{\mathrm{d}x}{\mathrm{d}u}\right)^2
-            \left(\frac{\mathrm{d}y}{\mathrm{d}u}\right)^2
-            \left(\frac{\mathrm{d}z}{\mathrm{d}u}\right)^2
-        }
-    }
-    \short => {
-        \int_a^t ||\left(r^\prime(u)\right)||
-    }
-}
-
-
-
-
-
-\A {
-    \AA_1 {
-        \AAA_1 {
-            Hello World
-        }
-    }
-    \AA_2 {
-        \AAA_2 {
-            SECOND
-        }
-    }
-    \AA_3 {
-        \AAA {
-            THIRD
-        }
-    }
-}
-
-\B {
-    \BB_1 {
-        \BBB {
-            SECOND
-        }
-    }
-    \BB_2 {
-        \BBB_2_1 {
-            SECOND
-        }
-        \BBB_2_3 {
-            SECOND
-        }
-    }
-}
-
-\img[width=500px]{}
