@@ -63,10 +63,9 @@ fn to_frontend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::frontend::ast::Ast<
                 None
             }
             Node::Enclosure(node) if last_is_tag && node.is_curly_brace() => {
-                let last = last.unwrap();
-                let mut block = last.clone().into_tag().unwrap();
+                let tag = last.unwrap();
                 let children = to_frontend_ir(node.children);
-                block.children.extend(children);
+                tag.unpack_tag_mut().unwrap().children.extend(children);
                 None
             }
             Node::Enclosure(node) => {
@@ -373,13 +372,10 @@ fn run_parser_internal_ast<'a>(source: &'a str) -> Vec<Node<'a>> {
 pub fn run_parser<'a>(source: &'a str) -> Vec<crate::frontend::Ast<'a>> {
     let children = run_parser_internal_ast(source);
     let children = to_frontend_ir(children);
-    let parameters = std::convert::identity;
-    let block = normalize_ir;
-    let rewrite_rules = std::convert::identity;
     let transfomer = frontend::ast::ChildListTransformer {
-        parameters: Rc::new(parameters),
-        block: Rc::new(block),
-        rewrite_rules: Rc::new(rewrite_rules),
+        parameters: Rc::new(std::convert::identity),
+        block: Rc::new(normalize_ir),
+        rewrite_rules: Rc::new(std::convert::identity),
         marker: std::marker::PhantomData
     };
     let node = frontend::Ast::Enclosure(frontend::Enclosure {

@@ -1,4 +1,4 @@
-\equation {
+\equation[centered align=left] {
     f \cdot \Delta_x = 1
 }
 \!where {

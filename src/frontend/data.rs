@@ -3,11 +3,33 @@ use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
 
+#[derive(Debug, Clone)]
+pub enum LayoutKind {
+    Block,
+    Inline,
+}
+
 pub type Atom<'a> = Cow<'a, str>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, Eq)]
 pub struct Text<'a>(pub Cow<'a, str>);
 
+impl<'a> Text<'a> {
+    pub fn new(value: &'a str) -> Self {
+        Text(Cow::Borrowed(value))
+    }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+    pub fn append(self, other: Text<'a>) -> Self {
+        Text(self.0 + other.0)
+    }
+}
+impl<'a> std::fmt::Display for Text<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 impl<'a> PartialEq for Text<'a> {
     fn eq(&self, other: &Self) -> bool {
         let left = &*self.0;
@@ -24,22 +46,6 @@ impl<'a> PartialEq<str> for Text<'a> {
     }
 }
 
-
-
-impl<'a> Text<'a> {
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-    pub fn append(self, other: Text<'a>) -> Self {
-        Text(self.0 + other.0)
-    }
-}
-
-impl<'a> std::fmt::Display for Text<'a> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
 
 
 pub static TOKEN_SET: &'static [&'static str] = &["\\", "[", "]", "{", "}", "(", ")", "=>", "_", "^"];

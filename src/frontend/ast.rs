@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
+use std::vec;
 use crate::frontend::data::{
     Text,
     Enclosure,
@@ -179,6 +181,12 @@ impl<'a> Ast<'a> {
             _ => None,
         }
     }
+    pub fn into_enclosure_children(self, kind: EnclosureKind) -> Option<Vec<Ast<'a>>> {
+        match self {
+            Ast::Enclosure(x) if x.kind == kind => Some(x.children),
+            _ => None,
+        }
+    }
     pub fn into_ident(self) -> Option<Atom<'a>> {
         match self {
             Ast::Ident(x) => Some(x),
@@ -291,7 +299,7 @@ impl<'a> Ast<'a> {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// PASSES
+// AST-TO-AST PASSES
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -314,7 +322,9 @@ pub fn match_and_apply_rewrite_rule<'a>(
             let _ = current
                 .drain(..pattern.len())
                 .collect::<Vec<_>>();
+            continue;
         }
+        left.push(current.remove(0));
     }
     left.extend(current);
     left
@@ -356,19 +366,29 @@ pub fn node_passes<'a>(node: Ast<'a>) -> Ast<'a> {
             Ast::Tag(block) => {
                 let mut children = block.children;
                 for RewriteRule{from, to} in block.rewrite_rules {
-                    // let from = from
-                    //     .into
-                    // children = match_and_apply_rewrite_rule(
-                    //     from,
-                    //     to,
-                    //     children,
-                    // );
+                    let from = from
+                        .into_enclosure_children(EnclosureKind::CurlyBrace);
+                    let to = to
+                        .into_enclosure_children(EnclosureKind::CurlyBrace);
+                    match (from, to) {
+                        (Some(from), Some(to)) => {
+                            children = match_and_apply_rewrite_rule(
+                                from,
+                                to,
+                                children,
+                            );
+                        }
+                        _ => ()
+                    }
                 }
-                unimplemented!()
+                Ast::Tag(Tag {
+                    name: block.name,
+                    parameters: block.parameters,
+                    children,
+                    rewrite_rules: Vec::new(),
+                })
             }
-            Ast::Enclosure(block) => {
-                unimplemented!()
-            }
+            node @ Ast::Enclosure(_) => node,
             node @ Ast::Content(_) => node,
             node @ Ast::Token(_) => node,
             node @ Ast::Ident(_) => node,
@@ -386,13 +406,130 @@ pub fn passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// AST-TO-CODEGEN PASSES
+///////////////////////////////////////////////////////////////////////////////
+
+use crate::codegen::html;
+
+pub fn to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
+    fn enclosure<'a>(
+        start: &'a str,
+        children: Vec<Ast<'a>>,
+        end: &'a str,
+    ) -> html::Node<'a> {
+        html::Node::Fragment(
+            vec![
+                vec![html::Node::new_text("{")],
+                children.into_iter().map(to_html).collect::<Vec<_>>(),
+                vec![html::Node::new_text("}")],
+            ].concat()
+        )
+    }
+    fn map_children<'a>(children: Vec<Ast<'a>>) -> Vec<html::Node<'a>> {
+        children.into_iter().map(to_html).collect::<Vec<_>>()
+    }
+    fn to_html_attributes<'a>(children: Vec<Ast<'a>>) -> HashMap<Text<'a>, Text<'a>> {
+        children
+            .into_iter()
+            .filter_map(|node| -> Option<Text<'a>> {
+                match node {
+                    Ast::Content(txt) => Some(Text(txt)),
+                    Ast::Token(txt) => Some(Text(txt)),
+                    _ => None
+                }
+            })
+            .map(|x| -> (Text<'a>, Text<'a>) {
+                if let Some((l, r)) = x.0.split_once("=") {
+                    (Text(Cow::Owned(l.to_owned())), Text(Cow::Owned(r.to_owned())))
+                } else {
+                    (x, Text(Cow::Borrowed("")))
+                }
+            })
+            .collect::<HashMap<_, _>>()
+    }
+    match node {
+        Ast::Tag(node) => {
+            html::Node::Element(html::Element {
+                name: Text(node.name),
+                attributes: node.parameters
+                    .map(to_html_attributes)
+                    .unwrap_or_default(),
+                children: map_children(node.children),
+            })
+        },
+        Ast::Enclosure(Enclosure {
+            kind: EnclosureKind::CurlyBrace,
+            children
+        }) => {
+            enclosure(
+                "{",
+                children,
+                "}"
+            )
+        },
+        Ast::Enclosure(Enclosure {
+            kind: EnclosureKind::Parens,
+            children
+        }) => {
+            enclosure(
+                "(",
+                children,
+                ")"
+            )
+        },
+        Ast::Enclosure(Enclosure {
+            kind: EnclosureKind::Module,
+            children
+        }) => {
+            html::Node::Fragment(map_children(children))
+        },
+        Ast::Enclosure(Enclosure {
+            kind: EnclosureKind::SquareParen,
+            children
+        }) => {
+            enclosure(
+                "(",
+                children,
+                ")"
+            )
+        },
+        Ast::Enclosure(Enclosure {
+            kind: EnclosureKind::Error{open, close},
+            children
+        }) => {
+            enclosure(
+                open,
+                children,
+                close
+            )
+        },
+        Ast::Ident(node) => {
+            let node = Text::new("\\").append(Text(node));
+            html::Node::Text(node)
+        },
+        Ast::Content(node) => {
+            html::Node::Text(Text(node))
+        },
+        Ast::Token(node) => {
+            html::Node::Text(Text(node))
+        },
+    }
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 // DEV
 ///////////////////////////////////////////////////////////////////////////////
 
 pub fn dev() {
     let source = include_str!("../../source.txt");
     let result = crate::frontend::parser::run_parser(source);
-    // let result = passes(result);
+    let result = passes(result);
+    let result = result
+        .into_iter()
+        .map(to_html)
+        .collect::<Vec<_>>();
     for node in result {
         println!("{:#?}", node);
     }
