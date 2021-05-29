@@ -7,6 +7,7 @@ use std::rc::Rc;
 use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
+use std::vec;
 use crate::frontend;
 use crate::frontend::data::*;
 
@@ -198,7 +199,6 @@ struct Zipper<T> {
 }
 
 enum ZipperConsumed {
-    Nothing,
     Current,
     Right,
 }
@@ -215,10 +215,86 @@ pub enum Mode<'a> {
     NoOP,
 }
 
+type BeginEnclosureStack<'a> = VecDeque<(&'a str, CharIndex, LinkedList<Node<'a>>)>;
 
-fn tick<'a>(
+
+fn parse_words<'a>(words: Vec<(CharRange, &'a str)>) -> Vec<Node<'a>> {
+    let mut enclosure_stack: BeginEnclosureStack = BeginEnclosureStack::new();
+    enclosure_stack.push_front(("[root]", CharIndex::zero(), Default::default()));
+    let mut skip_next  = false;
+    let mut skip_to: Option<usize> = None;
+    for word_pos in 0..words.len() {
+        if skip_next {
+            skip_next = false;
+            continue;
+        }
+        // GET LEFT - TODO REMOVE
+        let left = None;
+        // GET RIGHT
+        let right = words.get(word_pos + 1);
+        // GET CURRENT
+        let current = words.get(word_pos).unwrap();
+        // INIT ZIPPER
+        let zipper = Zipper {left, current, right};
+        // GO!
+        let (mode, consumed) = parse_word(zipper);
+        let range = {
+            match consumed {
+                ZipperConsumed::Right if right.is_some() => {
+                    let start = current.0.start;
+                    let end = right.unwrap().0.end;
+                    CharRange {start, end}
+                }
+                _ => current.0,
+            }
+        };
+        match mode {
+            Mode::BeginEnclosure {kind} => {
+                let start_pos = current.0.start;
+                enclosure_stack.push_back(
+                    (kind, start_pos, Default::default())
+                );
+            }
+            Mode::EndEnclosure {kind} => {
+                let mut last = enclosure_stack.pop_back().unwrap();
+                let mut parent = enclosure_stack.back_mut().unwrap();
+                let end_pos = range.end;
+                let node = Node::Enclosure(Enclosure {
+                    kind: EnclosureKind::new(
+                        last.0,
+                        kind
+                    ),
+                    children: last.2.into_iter().collect(),
+                });
+                parent.2.push_back(node);
+            }
+            Mode::Ident(ident) => {
+                let range = range;
+                let mut parent = enclosure_stack.back_mut().unwrap();
+                parent.2.push_back(Node::Ident(Atom::Borrowed(ident)));
+            }
+            Mode::NoOP => {
+                let range = range;
+                let mut parent = enclosure_stack.back_mut().unwrap();
+                let node = Node::String(Cow::Borrowed(current.1));
+                parent.2.push_back(node);
+            }
+        }
+        // FINALIZE
+        match consumed {
+            ZipperConsumed::Right => {skip_next = true}
+            ZipperConsumed::Current => {}
+        }
+    }
+    enclosure_stack
+        .into_iter()
+        .flat_map(|(_, _, xs)| xs)
+        .collect()
+}
+
+fn parse_word<'a>(
     // source: &'a str,
-    zipper: Zipper<&(usize, &'a str)>
+    zipper: Zipper<&(CharRange, &'a str)>
 ) -> (Mode<'a>, ZipperConsumed) {
     let pattern = (
         zipper.left.map(|(_, x)| x),
@@ -258,168 +334,90 @@ fn tick<'a>(
             Mode::EndEnclosure{kind: tk},
             ZipperConsumed::Current
         ),
-        _ => (
-            Mode::NoOP,
-            ZipperConsumed::Nothing,
-        ),
+        _ => (Mode::NoOP, ZipperConsumed::Current),
     }
 }
 
-type BeginEnclosureStack<'a> = VecDeque<(&'a str, LinkedList<Node<'a>>)>;
 
-fn feed_processor<'a>(words: Vec<(usize, &'a str)>) -> Vec<Node<'a>> {
-    let mut enclosure_stack = BeginEnclosureStack::new();
-    enclosure_stack.push_front(("[root]", Default::default()));
-    let mut skip_next  = false;
-    let mut skip_to: Option<usize> = None;
-    for word_pos in 0..words.len() {
-        if skip_next {
-            skip_next = false;
-            continue;
-        }
-        // GET LEFT
-        let left = {
-            if word_pos == 0 {
-                None
-            } else {
-                words.get(word_pos - 1)
-            }
-        };
-        // GET RIGHT
-        let right = words.get(word_pos + 1);
-        // GET CURRENT
-        let current = words.get(word_pos).unwrap();
-        // FOR SKIPPING TO NEXT RIGHT
-        let right_pos: Option<usize> = right.map(|x| x.0);
-        // INIT ZIPPER
-        let zipper = Zipper {left, current, right};
-        // GO!
-        let out = tick(zipper);
-        match out {
-            (Mode::BeginEnclosure {kind}, _) => {
-                enclosure_stack.push_back((kind, Default::default()));
-            }
-            (Mode::EndEnclosure {kind}, _) => {
-                let mut last = enclosure_stack.pop_back().unwrap();
-                let mut parent = enclosure_stack.back_mut().unwrap();
-                let node = Node::Enclosure(Enclosure {
-                    kind: EnclosureKind::new(
-                        last.0,
-                        kind
-                    ),
-                    children: {
-                        last.1
-                        .into_iter()
-                        .collect()
-                    },
-                });
-                parent.1.push_back(node);
-            }
-            (Mode::Ident(ident), _) => {
-                let mut parent = enclosure_stack.back_mut().unwrap();
-                parent.1.push_back(Node::Ident(Atom::Borrowed(ident)));
-            }
-            (Mode::NoOP, _) => {
-                let mut parent = enclosure_stack.back_mut().unwrap();
-                let node = Node::String(Cow::Borrowed(current.1));
-                parent.1.push_back(node);
-            }
-        }
-        // FINALIZE
-        match out.1 {
-            ZipperConsumed::Right => {
-                assert!(right_pos.is_some());
-                // if let Some(right_pos) = right_pos {
-                //     skip_to = Some(right_pos);
-                // }
-                skip_next = true;
-            }
-            ZipperConsumed::Current => {}
-            ZipperConsumed::Nothing => {}
-        }
-    }
-    enclosure_stack
+// MAIN ENTRYPOINT FOR STRING TO PARSER AST 
+fn run_parser_internal_ast<'a>(source: &'a str) -> Vec<Node<'a>> {
+    use itertools::Itertools;
+    let words: Vec<(CharRange, &str)> = source
+        .char_indices() // BYTE POSITION
+        .enumerate()
+        .map(|(cix, (bix, ch))| {
+            let char_index = CharIndex {
+                byte_index: bix,
+                char_index: cix,
+            };
+            (char_index, ch)
+        })
+        .group_by(|(_, c)| c.is_whitespace())
         .into_iter()
-        .flat_map(|(_, xs)| xs)
-        .collect()
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// INTERNAL HELPERS
-///////////////////////////////////////////////////////////////////////////////
-
-fn break_up<'a>(word: &'a str) -> Vec<&'a str> {
-    let break_up = TOKEN_SET
-        .into_iter()
-        .any(|tk| word.contains(tk));
-    let mut sub_strings = Vec::new();
-    let mut start_pos = 0;
-    let mut skip_to: Option<usize> = None;
-    // for ix in 0..word.len()
-    for ix in 0..word.len() {
-        if let Some(pos) = skip_to {
-            if ix < pos {
-                continue;
-            } else {
-                skip_to = None;
-            }
-        }
-        let sub_string = &word.get(ix..);
-        if sub_string.is_none() {
-            continue;
-        }
-        let sub_string = sub_string.unwrap();
-        let break_point = TOKEN_SET
-            .into_iter()
-            .find_map(|tk| {
-                if sub_string.starts_with(tk) {
-                    Some(tk.clone())
-                } else {
-                    None
+        .flat_map(|(key, values)| {
+            let values = values
+                .group_by(|(_, char)| {
+                    match char {
+                        '\\' => true,
+                        '{' => true,
+                        '}' => true,
+                        '[' => true,
+                        ']' => true,
+                        '(' => true,
+                        ')' => true,
+                        '=' => true,
+                        '>' => true,
+                        '_' => true,
+                        '^' => true,
+                        _ => false
+                    }
+                })
+                .into_iter()
+                .flat_map(|(key, group)| -> Vec<Vec<(CharIndex, char)>> {
+                    if key == true {
+                        group
+                            .into_iter()
+                            .map(|(ix, ch)| {
+                                vec![(ix, ch)]
+                            })
+                            .collect::<Vec<_>>()
+                    } else {
+                        vec![group.into_iter().collect::<Vec<_>>()]
+                    }
+                })
+                .collect_vec();
+            // DONE
+            values
+        })
+        .filter(|xs| xs.len() != 0)
+        .filter_map(|xs| {
+            let range: (CharIndex, CharIndex) = match xs.len() {
+                0 => unimplemented!(),
+                1 => (xs[0].0, xs[0].0),
+                _ => {
+                    let start = xs.first().unwrap().0;
+                    let end = xs.last().unwrap().0;
+                    (start, end)
                 }
-            });
-        if let Some(break_point) = break_point {
-            let end_pos = ix + break_point.len();
-            let left = &word[start_pos..ix];
-            let current = &word[ix..end_pos];
-            skip_to = Some(ix + break_point.len());
-            start_pos = end_pos;
-            if !left.is_empty() {
-                sub_strings.push(left);
-            }
-            assert!(!current.is_empty());
-            sub_strings.push(current);
-        }
-    }
-    sub_strings.push(&word[start_pos..]);
-    sub_strings
+            };
+            let range = CharRange{
+                start: range.0,
+                end: range.1,
+            };
+            // println!("{:#?}", xs);
+            let word = range.substrng(source)?;
+            Some((range, word))
+        })
+        .collect_vec();
+    // println!("{:#?}", words);
+    parse_words(words)
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // PARSER ENTRYPOINT
 ///////////////////////////////////////////////////////////////////////////////
 
-fn run_parser_internal_ast<'a>(source: &'a str) -> Vec<Node<'a>> {
-    let words = {
-        let mut index = 0;
-        source
-            .split_whitespace()
-            .intersperse(" ")
-            .flat_map(|word| -> Vec<(usize, &str)> {
-                break_up(word)
-                    .into_iter()
-                    .map(|sub| {
-                        let ix = index;
-                        index = index + sub.len();
-                        (ix, sub)
-                    })
-                    .collect()
-            })
-            .filter(|x| !x.1.is_empty())
-            .collect::<Vec<_>>()
-    };
-    feed_processor(words)
-}
 
 pub fn run_parser<'a>(source: &'a str) -> Vec<crate::frontend::Ast<'a>> {
     let children = run_parser_internal_ast(source);
@@ -440,17 +438,13 @@ pub fn run_parser<'a>(source: &'a str) -> Vec<crate::frontend::Ast<'a>> {
 // DEV
 ///////////////////////////////////////////////////////////////////////////////
 
-fn dev_parser() {
-    let source = include_str!("../../source.txt");
-    // let top_level = run_parser_internal_ast(source);
-    let top_level = run_parser(source);
-    for node in top_level {
-        println!("{:#?}", node);
-    }
-}
 
 
 pub(crate) fn dev() {
-    dev_parser();
+    let source = include_str!("../../source.txt");
+    let result = run_parser(source);
+    for node in result {
+        println!("{:#?}", node);
+    }
 }
 

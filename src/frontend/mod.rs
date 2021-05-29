@@ -13,4 +13,5 @@ pub use data::{
     RewriteRule,
     Enclosure,
     EnclosureKind,
+    CharIndex,
 };

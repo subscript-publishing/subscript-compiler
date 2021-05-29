@@ -5,6 +5,44 @@ use std::iter::FromIterator;
 
 pub static INLINE_MATH_TAG: &'static str = "[inline-math]";
 
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
+pub struct CharIndex {
+    pub byte_index: usize,
+    pub char_index: usize,
+}
+
+impl CharIndex {
+    pub fn zero() -> Self {
+        CharIndex{
+            byte_index: 0,
+            char_index: 0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
+pub struct CharRange {
+    pub start: CharIndex,
+    pub end: CharIndex,
+}
+
+impl CharRange {
+    pub fn substrng<'a>(&self, source: &'a str) -> Option<&'a str> {
+        fn find_utf8_end(s: &str, i: usize) -> Option<usize> {
+            s.char_indices().nth(i).map(|(_, x)| x.len_utf8())
+        }
+        let start_byte = self.start.byte_index;
+        let end_byte = self.end.byte_index;
+        source
+            .get(start_byte..=end_byte)
+            .or_else(|| {
+                let corrected_end = find_utf8_end(source, end_byte)?;
+                source.get(start_byte..=end_byte)
+            })
+    }
+}
+
+
 #[derive(Debug, Clone)]
 pub enum LayoutKind {
     Block,
