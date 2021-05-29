@@ -1,215 +1,222 @@
 \h1{Chemical Formulas}
-\note{
-    \h2{Molecular Formula}
-    \ul{
-        \li{Shows actual number of atoms.}
-        \li{Used for covalently bonded atoms.}
+\layout[cols=3] {
+    \note{
+        \h2{Molecular Formula}
+        \ul{
+            \li{Shows actual number of atoms.}
+            \li{Used for covalently bonded atoms.}
+        }
     }
-}
-\note{
-    \h2{Empirical Formula}
-    \ul{
-        \li{simplest whole-integer ratio of atoms in a compound.}
-        \li{Used for ionic compounds -crystals that can form thousands of bonds. Such as \{\mathrm{Na}_{1000}\mathrm{Cl}_{1000}}. The Empirical Formula simplified this into just \{\mathrm{Na}\mathrm{Cl}}.}
+    \note{
+        \h2{Empirical Formula}
+        \ul{
+            \li{simplest whole-integer ratio of atoms in a compound.}
+            \li{Used for ionic compounds -crystals that can form thousands of bonds. Such as \{\mathrm{Na}_{1000}\mathrm{Cl}_{1000}}. The Empirical Formula simplified this into just \{\mathrm{Na}\mathrm{Cl}}.}
+        }
     }
-}
-\note{
-    \h2{Structural formula}
-    \ul{
-        \li{Graphical diagrams.}
+    \note{
+        \h2{Structural formula}
+        \ul{
+            \li{Graphical diagrams.}
+        }
     }
 }
 
 \h1{Compounds}
-\note{
-    \h2{Molecular (Covalent)}
-    \equation{
-        \text{nonmetal} + \text{non-metal} &\implies \text{molecular compound}
+\layout[cols=2] {
+    \note{
+        \h2{Molecular (Covalent)}
+        \equation{
+            \text{nonmetal} + \text{non-metal} &\implies \text{molecular compound}
+        }
     }
-}
-\note{
-    \h2{Ionic}
-    \equation{
-        \text{metal} + \text{non-metal} &\implies \text{ionic compound}
+    \note{
+        \h2{Ionic}
+        \equation{
+            \text{metal} + \text{non-metal} &\implies \text{ionic compound}
+        }
     }
 }
 
 \h1{Terminology}
-\note{
-    \h2{Solutions}
-    \ul{
-        \li{Solutions have previously been defined as \u{homogeneous mixtures}.}
-        \li{The relative amount of a given solution component is known as its \u{concentration}.}
-        \li{The \b{solvent} is some \{C_x} that is \u{significantly greater} than all other \{C_{xs}} in the given solution.}
-        \li{A \b{solute} is a component of a solution that is typically present at a \u{much lower concentration} than the solvent.
-            \note[inline]{Solute concentrations are often described with qualitative terms such as \b{dilute} (of relatively low concentration) and \b{concentrated} (of relatively high concentration).}
+\layout[cols=3] {
+    \note{
+        \h2{Solutions}
+        \ul{
+            \li{Solutions have previously been defined as \u{homogeneous mixtures}.}
+            \li{The relative amount of a given solution component is known as its \u{concentration}.}
+            \li{The \b{solvent} is some \{C_x} that is \u{significantly greater} than all other \{C_{xs}} in the given solution.}
+            \li{A \b{solute} is a component of a solution that is typically present at a \u{much lower concentration} than the solvent.
+                \note[inline]{Solute concentrations are often described with qualitative terms such as \b{dilute} (of relatively low concentration) and \b{concentrated} (of relatively high concentration).}
+            }
+            \li{This component is called the \b{solvent} and may be viewed as the \u{medium} in which the other components are \u{dispersed or dissolved}.}
+            \li{A \b{solution} in which \u{water is the solvent} is called an \u{\b{aqueous solution}}.}
         }
-        \li{This component is called the \b{solvent} and may be viewed as the \u{medium} in which the other components are \u{dispersed or dissolved}.}
-        \li{A \b{solution} in which \u{water is the solvent} is called an \u{\b{aqueous solution}}.}
     }
-}
-\note{
-    \h2{Dilution of Solutions}
-    \ul{
-        \li{\b{Dilution} is the process whereby the concentration of a solution is lessened by the \u{addition of solvent}.}
-        \li{\b{Dilution} is also a common means of preparing solutions of a desired concentration.
-            \note[inline]{By adding solvent to a measured portion of a more concentrated stock solution, a solution of lesser concentration may be prepared.}
+    \note{
+        \h2{Dilution of Solutions}
+        \ul{
+            \li{\b{Dilution} is the process whereby the concentration of a solution is lessened by the \u{addition of solvent}.}
+            \li{\b{Dilution} is also a common means of preparing solutions of a desired concentration.
+                \note[inline]{By adding solvent to a measured portion of a more concentrated stock solution, a solution of lesser concentration may be prepared.}
+            }
+            \li{A simple mathematical relationship can be used to relate the volumes and concentrations of a solution before and after the dilution process.}
         }
-        \li{A simple mathematical relationship can be used to relate the volumes and concentrations of a solution before and after the dilution process.}
+        According to the definition of molarity, the molar amount of solute in a solution (n) is equal to the product of the solution’s molarity (M) and its volume in liters (L):
+        \equation{
+            n &= ML
+        }
+        the dilution equation is often written in the more general form:
+        \equation{
+            C_1 V_1 &= C_2 V_2
+        }
+        where \{C} and \{V} are concentration and volume, respectively.
+        \h3{Determining the Concentration of a Diluted Solution}
+        \h3{Volume of a Diluted Solution}
+        \h3{Volume of a Concentrated Solution Needed for Dilution}
     }
-    According to the definition of molarity, the molar amount of solute in a solution (n) is equal to the product of the solution’s molarity (M) and its volume in liters (L):
-    \equation{
-        n &= ML
-    }
-    the dilution equation is often written in the more general form:
-    \equation{
-        C_1 V_1 &= C_2 V_2
-    }
-    where \{C} and \{V} are concentration and volume, respectively.
-    \h3{Determining the Concentration of a Diluted Solution}
-    \h3{Volume of a Diluted Solution}
-    \h3{Volume of a Concentrated Solution Needed for Dilution}
-}
-\note{
-    \h2{Other Units for Solution Concentrations}
-    \h3{Mass Percentage}
-    \h4{Calculation of Percent by Mass}
-    \h4{Calculations using Mass Percentage}
-    \h4{Calculations using Volume Percentage}
-    \h3{Mass-Volume Percentage}
-    \ul{
-        \li{A mass-volume percent is a ratio of a solute’s mass to the solution’s volume expressed as a percentage.}
-    }
-    \h3{Parts per Million and Parts per Billion}
-    \ul{
-        \li{Very low solute concentrations are often expressed using appropriately small units such as \b{parts per million} (ppm) or \b{parts per billion} (ppb).}
-        \li{The \b{ppm} and \b{ppb} units defined with respect to \u{numbers of atoms and molecules}.}
-        \li{Both \b{ppm} and \b{ppb} are convenient units for reporting the concentrations of pollutants and other trace contaminants in water.}
-    }
-    \equation{
-        \mathrm{ppm} &\equiv \frac{\text{mass solute}}{\text{mass solution}} \times 10^6 ppm \\
-        \mathrm{ppb} &\equiv \frac{\text{mass solute}}{\text{mass solution}} \times 10^9 ppb \\
+    \note{
+        \h2{Other Units for Solution Concentrations}
+        \h3{Mass Percentage}
+        \h4{Calculation of Percent by Mass}
+        \h4{Calculations using Mass Percentage}
+        \h4{Calculations using Volume Percentage}
+        \h3{Mass-Volume Percentage}
+        \ul{
+            \li{A mass-volume percent is a ratio of a solute’s mass to the solution’s volume expressed as a percentage.}
+        }
+        \h3{Parts per Million and Parts per Billion}
+        \ul{
+            \li{Very low solute concentrations are often expressed using appropriately small units such as \b{parts per million} (ppm) or \b{parts per billion} (ppb).}
+            \li{The \b{ppm} and \b{ppb} units defined with respect to \u{numbers of atoms and molecules}.}
+            \li{Both \b{ppm} and \b{ppb} are convenient units for reporting the concentrations of pollutants and other trace contaminants in water.}
+        }
+        \equation{
+            \mathrm{ppm} &\equiv \frac{\text{mass solute}}{\text{mass solution}} \times 10^6 ppm \\
+            \mathrm{ppb} &\equiv \frac{\text{mass solute}}{\text{mass solution}} \times 10^9 ppb \\
+        }
     }
 }
 
 \h1{Units & Values}
-\note{
-    \h2{Atomic Mass Unit (amu) }
-    \ul{
-        \li{Equivalent to Dalton (Da) and Unified Atomic Mass Unit (u).}
-    }
-    \equation{
-        1\;\mathrm{amu}
-            &= \frac{1}{12}\;\text{mass of carbon-12}\\
-            &\approx 1.6605 \times 10^{-24}\mathrm{g}
-    }
-}
-\note{
-    \h2{Fundamental Unit Of Charge (e)}
-}
-\note{
-    \h2{Formula Mass}
-    \equation{
-        \small{\text{Let}}\;\;&\\
-        A &= \text{“atoms in a given substance”}\\
-        A_{\mathrm{avg}} &= \text{“avg. mass of each atom in $A$”}\\
-        \small{\text{Therefore}}\;\;&\\
-        \text{“Formula Mass”} &= \text{“sum of all values in $A_{\mathrm{avg}}$”} = \text{“Molecular Mass”}
-    }
-}
-\note{}
-\note{
-    \h2{The Mole}
-    \ul{
-        \li{<a href="https://youtu.be/Z_TjGRPPR9Q">An Actually Good Explanation of Moles (YouTube)</a> -since we can't just count how many atoms we have for a given sample, we instead use e.g. grams to measure how many atoms we have.\note[inline]{“Person 1: how much oxygen do we have there?  Person 2: well you how the atomic mass of oxygen, so that, but in grams.” Moles are means of saying just such.}}
-    }
-    \hr
-    \equation{
-        1\;\mathrm{mole} &\approx 6.022 \times 10^{23}\\
-            &\approx 6.02 \times 10^{23}\\
-            &\approx \small{\text{“Avogadro’s number”}}
-    }
-    \hr
-    Note that
-    \equation{
-        1\;\mathrm{mole} & \implies \text{“amount” unit}\\
-    }
-    Therefore given any two elements \{E_1} and \{E_2}
-    \equation{
-        \text{$1$ mole of $E_1$} &= \text{$1$ mole of $E_2$}
-    }
-}
-\note{
-    \h2{Molar Mass}
-    \ul{
-        \li{The molar mass of an element (or compound) is the mass in grams of \{1} mole of that substance.}
-        \li{This property is expressed in units of grams per mole, \{\frac{\mathrm{g}}{\mathrm{mol}}}}
-        \li{The mass of \u{one mole} of atoms is called the \b{molar mass}.}
-        \li{The molar mass of an element is grams is numerically equal to the element's atomic mass (amu). e.g. 1\;\mathrm{mole}\;\text{of carbon} &= 12.011\;\mathrm{grams}\\1\;\mathrm{atom}\;\text{of carbon} &= 12.011\equation{\mathrm{amu}}}
-        \li{\{1\;\mathrm{mole}\;\text{of carbon} = 12.011\;\mathrm{grams}}; while the weight (in amu) of \{1\;\text{carbon} = 12.011\;\mathrm{amu}}. Technically, the mass of \{1\;\mathrm{mole}} of a given substance should be denoted as \{\frac{\mathrm{g}}{\mathrm{amu}}}.}
-    }
-    \h3{Notes}
-    \equation{
-        \text{“molar mass of a compound $C_x$ in grams”} &= \text{“formula mass of $C_x$ in amu”}\\
-        \text{atomic mass} &= \text{molar mass}
-    }
-    \table{
-        \row{
-            Element,
-            Average Atomic Mass (amu),
-            Molar Mass (g/mol),
-            Atoms/Mole,
+\layout[cols=3] {
+    \note{
+        \h2{Atomic Mass Unit (amu) }
+        \ul{
+            \li{Equivalent to Dalton (Da) and Unified Atomic Mass Unit (u).}
         }
-        \row{
-            C,
-            12.01,
-            12.01,
-            \{6.022 \times 10^23},
+        \equation{
+            1\;\mathrm{amu}
+                &= \frac{1}{12}\;\text{mass of carbon-12}\\
+                &\approx 1.6605 \times 10^{-24}\mathrm{g}
         }
     }
-}
-\note{
-    \h2{Percent Composition}
-    \ul{
-        \li{Works for \b{Molecular} and \b{Empirical Formulas}.}
-        \li{Can be used for \u{determining an \b{Empirical Formula} from \b{Percent Composition}}.}
+    \note{
+        \h2{Fundamental Unit Of Charge (e)}
     }
-    Given some compound \{C_x}
-    \equation{
-        \text{“Percent Composition”} &\equiv \text{“percentage by mass of each element in $C_x$”}
-    }
-    Therefore given some \{E_x \in C_x}
-    \equation{
-        \% E_x &\equiv \frac{\text{mass of $E_x$}}{\text{total mass of $C_x$}} \times 100\%
-    }
-    Note that \{E_x} may itself be a group of atoms in the case of Molecular and Empirical Formulas.
-    \h3{Determining Empirical Formula from Percent Composition}
-    \h3{Derivation of Molecular Formulas}
-    \ul{
-        \li{Molecular formulas are derived by comparing the compound’s molecular or molar mass to its \u{empirical formula mass}.
-            \note[inline]{As the name suggests, an empirical formula mass is the sum of the average atomic masses of all the atoms represented in an empirical formula.}
+    \note{
+        \h2{Formula Mass}
+        \equation{
+            \small{\text{Let}}\;\;&\\
+            A &= \text{“atoms in a given substance”}\\
+            A_{\mathrm{avg}} &= \text{“avg. mass of each atom in $A$”}\\
+            \small{\text{Therefore}}\;\;&\\
+            \text{“Formula Mass”} &= \text{“sum of all values in $A_{\mathrm{avg}}$”} = \text{“Molecular Mass”}
         }
     }
-}
-\note{
-    \h2{Molarity (M)}
-    \ul{
-        \li{Molarity is defined as the \u{number of moles of solute} in exactly \u{1 liter of the solution}.}
+    \note{
+        \h2{The Mole}
+        \ul{
+            \li{<a href="https://youtu.be/Z_TjGRPPR9Q">An Actually Good Explanation of Moles (YouTube)</a> -since we can't just count how many atoms we have for a given sample, we instead use e.g. grams to measure how many atoms we have.\note[inline]{“Person 1: how much oxygen do we have there?  Person 2: well you how the atomic mass of oxygen, so that, but in grams.” Moles are means of saying just such.}}
+        }
+        \hr
+        \equation{
+            1\;\mathrm{mole} &\approx 6.022 \times 10^{23}\\
+                &\approx 6.02 \times 10^{23}\\
+                &\approx \small{\text{“Avogadro’s number”}}
+        }
+        \hr
+        Note that
+        \equation{
+            1\;\mathrm{mole} & \implies \text{“amount” unit}\\
+        }
+        Therefore given any two elements \{E_1} and \{E_2}
+        \equation{
+            \text{$1$ mole of $E_1$} &= \text{$1$ mole of $E_2$}
+        }
     }
-    \equation{
-        \mathrm{M} &\equiv \frac{\text{mol solute}}{1\; L\;\mathrm{solution}}
+    \note{
+        \h2{Molar Mass}
+        \ul{
+            \li{The molar mass of an element (or compound) is the mass in grams of \{1} mole of that substance.}
+            \li{This property is expressed in units of grams per mole, \{\frac{\mathrm{g}}{\mathrm{mol}}}}
+            \li{The mass of \u{one mole} of atoms is called the \b{molar mass}.}
+            \li{The molar mass of an element is grams is numerically equal to the element's atomic mass (amu). e.g. 1\;\mathrm{mole}\;\text{of carbon} &= 12.011\;\mathrm{grams}\\1\;\mathrm{atom}\;\text{of carbon} &= 12.011\equation{\mathrm{amu}}}
+            \li{\{1\;\mathrm{mole}\;\text{of carbon} = 12.011\;\mathrm{grams}}; while the weight (in amu) of \{1\;\text{carbon} = 12.011\;\mathrm{amu}}. Technically, the mass of \{1\;\mathrm{mole}} of a given substance should be denoted as \{\frac{\mathrm{g}}{\mathrm{amu}}}.}
+        }
+        \h3{Notes}
+        \equation{
+            \text{“molar mass of a compound $C_x$ in grams”} &= \text{“formula mass of $C_x$ in amu”}\\
+            \text{atomic mass} &= \text{molar mass}
+        }
+        \table{
+            \tr{
+                \td{Element}
+                \td{Average Atomic Mass (amu)}
+                \td{Molar Mass (g/mol)}
+                \td{Atoms/Mole}
+            }
+            \tr{
+                \td{C}
+                \td{12.01}
+                \td{12.01}
+                \td{\{6.022 \times 10^23}}
+            }
+        }
     }
-    \h3{Tips}
-    Given some element \{E}:
-    \equation{
-        E_m &= \text{amount of $E$ in moles}\\
-        E_g &= \text{amount of $E$ in grams}\\
-        E_{\text{amu}} &= \text{Atomic weight of $E$}\\
-        \text{Therefore}&\\
-        E_g &= E_m \times E_{\text{amu}}\\
-        \text{Or alternatively}&\\
-        \text{“Grams”} &= \text{“Moles”} \times \text{“Atomic weight”}
+    \note{
+        \h2{Percent Composition}
+        \ul{
+            \li{Works for \b{Molecular} and \b{Empirical Formulas}.}
+            \li{Can be used for \u{determining an \b{Empirical Formula} from \b{Percent Composition}}.}
+        }
+        Given some compound \{C_x}
+        \equation{
+            \text{“Percent Composition”} &\equiv \text{“percentage by mass of each element in $C_x$”}
+        }
+        Therefore given some \{E_x \in C_x}
+        \equation{
+            \% E_x &\equiv \frac{\text{mass of $E_x$}}{\text{total mass of $C_x$}} \times 100\%
+        }
+        Note that \{E_x} may itself be a group of atoms in the case of Molecular and Empirical Formulas.
+        \h3{Determining Empirical Formula from Percent Composition}
+        \h3{Derivation of Molecular Formulas}
+        \ul{
+            \li{Molecular formulas are derived by comparing the compound’s molecular or molar mass to its \u{empirical formula mass}.
+                \note[inline]{As the name suggests, an empirical formula mass is the sum of the average atomic masses of all the atoms represented in an empirical formula.}
+            }
+        }
     }
-    \h3{Determining the Volume of Solution Containing a Given Mass of Solute}
-}
+    \note{
+        \h2{Molarity (M)}
+        \ul{
+            \li{Molarity is defined as the \u{number of moles of solute} in exactly \u{1 liter of the solution}.}
+        }
+        \equation{
+            \mathrm{M} &\equiv \frac{\text{mol solute}}{1\; L\;\mathrm{solution}}
+        }
+        \h3{Tips}
+        Given some element \{E}:
+        \equation{
+            E_m &= \text{amount of $E$ in moles}\\
+            E_g &= \text{amount of $E$ in grams}\\
+            E_{\text{amu}} &= \text{Atomic weight of $E$}\\
+            \text{Therefore}&\\
+            E_g &= E_m \times E_{\text{amu}}\\
+            \text{Or alternatively}&\\
+            \text{“Grams”} &= \text{“Moles”} \times \text{“Atomic weight”}
+        }
+        \h3{Determining the Volume of Solution Containing a Given Mass of Solute}
+    }
 
+}

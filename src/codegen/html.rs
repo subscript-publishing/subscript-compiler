@@ -131,7 +131,7 @@ pub fn render_document<'a>(html: Vec<Node<'a>>) -> String {
         .map(|x| x.0)
         .collect::<Vec<_>>()
         .join("\n");
-    let html = String::from(include_str!("../../assets/template.html"));
+    let html = String::from(include_str!("../../assets/template.html.txt"));
     let html = html.replace("{{deps}}", include_str!("../../assets/deps.html"));
     let html = html.replace("{{css}}", include_str!("../../assets/styling.css"));
     html.replace("{{body}}", &body)
@@ -144,7 +144,7 @@ pub fn render_document<'a>(html: Vec<Node<'a>>) -> String {
 pub fn dev() {
     let source = include_str!("../../source.txt");
     let parsed = crate::frontend::parser::run_parser(source);
-    let result = crate::frontend::to_html_pipeline(parsed);
+    let result = crate::frontend::passes::to_html_pipeline(parsed);
     // let result = crate::frontend::parser::run_parser(source);
     // let result = passes(result);
     // let result = result

@@ -45,3 +45,14 @@
     {y_1} => {\colorB{y_1}}
     {z_1} => {\colorB{z_1}}
 }
+
+\note {
+    \h1{The Acceleration Vector \{\vec{v}} }
+    \equation {
+        \vec{a} =
+        \lim_{t\to 0} \frac{\vec{v}(t + \Delta t)-\vec{v}}{\Delta t} =
+        \frac
+            {\mathrm{d}\vec{v}}
+            {\mathrm{d}t}
+    }
+}
