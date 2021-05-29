@@ -1,0 +1,27 @@
+li, dt, dd, th, td {
+    font-family: 'Roboto Slab', monospace;
+    text-rendering: optimizeLegibility;
+    text-align: justify;
+}
+
+li, dd {
+    margin-bottom: 4px;
+}
+
+li:last-child,
+dd:last-child {
+    margin-bottom: 0;
+}
+
+ul, ol, dl {
+    padding-left: 38px;
+    font-weight: 300;
+}
+
+ul {
+    margin: 0;
+}
+
+p[center] {
+    text-align: center;
+}

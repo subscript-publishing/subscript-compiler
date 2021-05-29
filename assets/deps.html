@@ -1,0 +1,56 @@
+<!-- MATH-JAX -->
+<script>
+window.MathJax = {
+    tex: {
+        inlineMath: [['\\(', '\\)']],
+        macros: {
+            'dx': "{\\, \\mathrm{d}x\\;}",
+            'Integrate': ['{\\int_{#1}^{#2}\\, #3 \\dx}', 3],
+            'IntegrateFor': ['{\\int_{#1}^{#2}\\, #3 {\\, \\mathrm{d}{#4}\\;}}', 4],
+            'I': ['{\\Integrate{a}{b}{#1}}', 1],
+            'angles': ['\\langle {#1},{#2} \\rangle', 2],
+            's': ['\\;\\mathrm{{#1}}', 1], // symbol
+            'D': ['{\\frac{\\mathrm{d}{#1}}{\\mathrm{d}{#2}}}', 2],
+            'colorA': ['\\textcolor{Periwinkle}{#1}', 1],
+            'colorB': ['\\textcolor{DarkOrchid}{#1}', 1],
+            'colorC': ['\\textcolor{Aquamarine}{#1}', 1],
+            'colorD': ['\\textcolor{SeaGreen}{#1}', 1],
+            'dPrime': '{\\prime\\prime}',
+            'reciprocal': ['\\frac{1}{#1}', 1],
+            'parens': ['\\left({#1}\\right)', 1],
+        },
+    },
+    processEscapes: true,
+    options: {enableMenu: false},
+};
+</script>
+<script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+</script>
+
+<!--FONTS (TODO SMALLER)-->
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,200;0,300;0,400;0,600;0,700;0,900;1,200;1,300;1,400;1,600;1,700;1,900&display=swap" rel="stylesheet">
+
+<!-- MISC -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"/>
+
+<!-- STYLIG -->
+<link rel="preconnect" href="https://fonts.gstatic.com"> 
+<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Roboto+Slab:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Roboto+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&family=Roboto+Slab:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://raw.githubusercontent.com/joshuarudd/typeset.css/master/typeset.min.css">
+<style>
+    * {
+        box-sizing: border-box;
+    }
+    body {
+        margin: 0;
+    }
+    mjx-container {
+        font-family: 'Roboto Slab', monospace;
+        text-rendering: optimizeLegibility;
+    }
+</style>

@@ -1,0 +1,59 @@
+/* ========================================================================= */
+/* SITE-HEADER */
+/* ========================================================================= */
+header#site-header {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    margin: 12px;
+    grid-column-gap: 12px;
+    grid-row-gap: 12px;
+}
+
+header#site-header h1 {
+    color: #fff;
+    border-bottom: none;
+    margin: 0;
+    font-size: 1.3em;
+}
+
+header#site-header ul {
+    list-style: none;
+    margin-bottom: 0;
+}
+
+header#site-header > div > ul {
+    margin-top: 4px;
+    padding-left: 0;
+}
+
+@media (max-width: 900px) {
+    header#site-header {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ========================================================================= */
+/* PAGE-NAV */
+/* ========================================================================= */
+[page-nav] {
+    padding: 12px;
+    background-color: #2f2f2f;
+    border-radius: 3px;
+}
+
+
+/* ========================================================================= */
+/* TOC */
+/* ========================================================================= */
+[toc] {
+    padding: 12px;
+    background-color: #2f2f2f;
+    border-radius: 3px;
+}
+
+[macro='toc'] > li[for='h1'] {margin-left: 0;}
+[macro='toc'] > li[for='h2'] {margin-left: 20px;}
+[macro='toc'] > li[for='h3'] {margin-left: 30px;}
+[macro='toc'] > li[for='h4'] {margin-left: 40px;}
+[macro='toc'] > li[for='h5'] {margin-left: 50px;}
+[macro='toc'] > li[for='h6'] {margin-left: 60px;}

@@ -7,3 +7,5 @@ edition = "2018"
 
 [dependencies]
 either = "1.6.1"
+structopt = "0.3.21"
+lazy_static = "1.4.0"

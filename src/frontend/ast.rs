@@ -13,6 +13,7 @@ use crate::frontend::data::{
     SquareParen,
     RewriteRule,
     EnclosureKind,
+    INLINE_MATH_TAG,
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -24,8 +25,35 @@ use crate::frontend::data::{
 pub struct Tag<'a> {
     pub name: Atom<'a>,
     pub parameters: Option<Vec<Ast<'a>>>,
+    /// Each child node generally should be an `Enclosure` (with the `CurlyBrace` kind).
+    /// Until perhaps the codegen.
     pub children: Vec<Ast<'a>>,
     pub rewrite_rules: Vec<RewriteRule<Ast<'a>>>,
+}
+
+impl<'a> Tag<'a> {
+    /// Some tag with no parameters and just children.
+    pub fn new(name: &'a str, children: Vec<Ast<'a>>) -> Self {
+        Tag{
+            name: Cow::Borrowed(name),
+            parameters: None,
+            children,
+            rewrite_rules: Vec::new(),
+        }
+    }
+    pub fn has_name(&self, name: &str) -> bool {
+        return self.name == name 
+    }
+    pub fn insert_parameter(&mut self, value: &str) {
+        let mut args = self.parameters.clone().unwrap_or(Vec::new());
+        args.push(Ast::Content(Cow::Owned(
+            value.to_owned()
+        )));
+        self.parameters = Some(args);
+    }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 // #[derive(Debug, Clone)]
@@ -51,6 +79,23 @@ pub enum Ast<'a> {
 }
 
 impl<'a> Ast<'a> {
+    pub fn new_fragment(nodes: Vec<Self>) -> Self {
+        Ast::Enclosure(Enclosure {
+            kind: EnclosureKind::Fragment,
+            children: nodes,
+        })
+    }
+    /// Unpacks an `Ast::Enclosure` with the `Fragment` kind or
+    /// returns a singleton vec.
+    pub fn into_fragment(self) -> Vec<Self> {
+        match self {
+            Ast::Enclosure(Enclosure{
+                kind: EnclosureKind::Fragment,
+                children
+            }) => children,
+            x => vec![x]
+        }
+    }
     /// Bottom up transformation.
     pub fn transform<F: Fn(Ast<'a>) -> Ast<'a>>(self, f: Rc<F>) -> Self {
         match self {
@@ -163,6 +208,12 @@ impl<'a> Ast<'a> {
             _ => None,
         }
     }
+    pub fn unpack_content_mut(&mut self) -> Option<&mut Atom<'a>> {
+        match self {
+            Ast::Content(x) => Some(x),
+            _ => None,
+        }
+    }
     pub fn unpack_token(&self) -> Option<&Atom<'a>> {
         match self {
             Ast::Token(x) => Some(x),
@@ -211,9 +262,81 @@ impl<'a> Ast<'a> {
             _ => None,
         }
     }
-
     pub fn unsafe_unwrap_ident(&self) -> &Atom<'a> {
         self.unpack_ident().unwrap()
+    }
+    pub fn is_whitespace(&self) -> bool {
+        match self {
+            Ast::Content(node) => node == &" ",
+            Ast::Token(node) => node == &" ",
+            _ => false
+        }
+    }
+    pub fn to_string(self) -> String {
+        fn pack<'a>(x: Cow<'a, str>) -> String {
+            match x {
+                Cow::Borrowed(x) => String::from(x),
+                Cow::Owned(x) => x,
+            }
+        }
+        fn ident<'a>(x: Cow<'a, str>) -> String {
+            let mut txt = pack(x);
+            txt.insert(0, '\\');
+            txt
+        }
+        fn enclosure<'a>(
+            start: &str,
+            content: String,
+            end: &str,
+        ) -> String {
+            format!("{}{}{}", start, content, end)
+        }
+        match self {
+            Ast::Tag(tag) => {
+                let name = pack(tag.name);
+                let children = tag.children
+                    .into_iter()
+                    .map(Ast::to_string)
+                    .collect::<Vec<_>>()
+                    .join("");
+                format!("\\{}{}", name, children)
+            }
+            Ast::Enclosure(block) => {
+                let children = block.children
+                    .into_iter()
+                    .map(Ast::to_string)
+                    .collect::<Vec<_>>()
+                    .join("");
+                match block.kind {
+                    EnclosureKind::Fragment => {
+                        children
+                    }
+                    EnclosureKind::CurlyBrace => {
+                        enclosure("{", children, "}")
+                    }
+                    EnclosureKind::Parens => {
+                        enclosure("(", children, ")")
+                    }
+                    EnclosureKind::SquareParen => {
+                        enclosure("[", children, "]")
+                    }
+                    EnclosureKind::Error{open, close} => {
+                        enclosure(open, children, close)
+                    }
+                }
+            }
+            Ast::Ident(x) => ident(x),
+            Ast::Content(x) => pack(x),
+            Ast::Token(x) => pack(x),
+        }
+    }
+    pub fn unblock(self) -> Vec<Self> {
+        match self {
+            Ast::Enclosure(block) if block.kind == EnclosureKind::CurlyBrace => {
+                block.children
+            }
+            x => vec![x]
+        }
     }
 }
 
@@ -263,17 +386,18 @@ impl<'a> Ast<'a> {
                     })
                     .collect();
                 let rewrite_rules = (f.rewrite_rules)(rewrite_rules);
+                let parameters = node.parameters.map(|param| {
+                    let param = param
+                        .into_iter()
+                        .map(|x| {
+                            x.child_list_transformer(f.clone())
+                        })
+                        .collect();
+                    (f.parameters)(param)
+                });
                 let node = Tag {
                     name: node.name,
-                    parameters: node.parameters.map(|param| {
-                        let param = param
-                            .into_iter()
-                            .map(|x| {
-                                x.child_list_transformer(f.clone())
-                            })
-                            .collect();
-                        (f.parameters)(param)
-                    }),
+                    parameters,
                     children,
                     rewrite_rules,
                 };
@@ -332,23 +456,35 @@ pub fn match_and_apply_rewrite_rule<'a>(
 
 
 pub fn child_list_passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
-    let parameters = |xs: Vec<Ast<'a>>| -> Vec<Ast<'a>> {
-        xs
-    };
-    let block = |xs: Vec<Ast<'a>>| -> Vec<Ast<'a>> {
-        xs
-    };
-    let rewrite_rules = |xs: Vec<RewriteRule<Ast<'a>>>| -> Vec<RewriteRule<Ast<'a>>> {
-        xs
-    };
+    // APPLY AFTER REMOVING ALL TOKENS
+    fn merge_text_content<'a>(xs: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
+        let mut results = Vec::new();
+        for current in xs.into_iter() {
+            assert!(!current.is_token());
+            let left = results
+                .last_mut()
+                .and_then(Ast::unpack_content_mut);
+            if let Some(left) = left {
+                if let Some(txt) = current.unpack_content() {
+                    *left = left.to_owned() + txt.to_owned();
+                    continue;
+                }
+            }
+            results.push(current);
+        }
+        results
+    }
+    fn block_passes<'a>(xs: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
+        merge_text_content(xs)
+    }
     let transfomer = ChildListTransformer {
-        parameters: Rc::new(parameters),
-        block: Rc::new(block),
-        rewrite_rules: Rc::new(rewrite_rules),
+        parameters: Rc::new(std::convert::identity),
+        block: Rc::new(block_passes),
+        rewrite_rules: Rc::new(std::convert::identity),
         marker: std::marker::PhantomData
     };
     let node = Ast::Enclosure(Enclosure {
-        kind: EnclosureKind::Module,
+        kind: EnclosureKind::Fragment,
         children,
     });
     let node = node.child_list_transformer(Rc::new(transfomer));
@@ -361,36 +497,83 @@ pub fn child_list_passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
 }
 
 pub fn node_passes<'a>(node: Ast<'a>) -> Ast<'a> {
+    fn apply_rewrite_rules<'a>(tag: Tag<'a>) -> Tag<'a> {
+        let mut children = tag.children;
+        for RewriteRule{from, to} in tag.rewrite_rules {
+            let from = from
+                .into_enclosure_children(EnclosureKind::CurlyBrace);
+            let to = to
+                .into_enclosure_children(EnclosureKind::CurlyBrace);
+            match (from, to) {
+                (Some(from), Some(to)) => {
+                    children = match_and_apply_rewrite_rule(
+                        from,
+                        to,
+                        children,
+                    );
+                }
+                _ => ()
+            }
+        }
+        Tag {
+            name: tag.name,
+            parameters: tag.parameters,
+            children,
+            rewrite_rules: Vec::new(),
+        }
+    }
+    fn process_tags<'a>(mut tag: Tag<'a>) -> Tag<'a> {
+        let extract_tags = HashSet::<&str>::from_iter(vec![
+            "note",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "li",
+            "ul",
+            "ol",
+            "table",
+            "tr",
+            "td",
+        ]);
+        fn unblock_children<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
+            children
+                .into_iter()
+                .flat_map(|child| {
+                    match child {
+                        Ast::Enclosure(
+                            block
+                        ) if block.kind == EnclosureKind::CurlyBrace => {
+                            block.children
+                        }
+                        _ => vec![child]
+                    }
+                })
+                .collect()
+        }
+        let name: &str = &(tag.name);
+        if extract_tags.contains(name) {
+            tag.children = unblock_children(tag.children);
+        }
+        // REWRITE SUBSCRIPT ONLY TAGS INTO VALID HTML
+        if name == "note" {
+            tag.name = Cow::Borrowed("div");
+            tag.insert_parameter("note");
+        }
+        tag
+    }
     let f = |node: Ast<'a>| -> Ast<'a> {
         match node {
-            Ast::Tag(block) => {
-                let mut children = block.children;
-                for RewriteRule{from, to} in block.rewrite_rules {
-                    let from = from
-                        .into_enclosure_children(EnclosureKind::CurlyBrace);
-                    let to = to
-                        .into_enclosure_children(EnclosureKind::CurlyBrace);
-                    match (from, to) {
-                        (Some(from), Some(to)) => {
-                            children = match_and_apply_rewrite_rule(
-                                from,
-                                to,
-                                children,
-                            );
-                        }
-                        _ => ()
-                    }
-                }
-                Ast::Tag(Tag {
-                    name: block.name,
-                    parameters: block.parameters,
-                    children,
-                    rewrite_rules: Vec::new(),
-                })
+            Ast::Tag(tag) => {
+                let tag = apply_rewrite_rules(tag);
+                let tag = process_tags(tag);
+                Ast::Tag(tag)
             }
+            Ast::Token(tk) => Ast::Content(tk),
             node @ Ast::Enclosure(_) => node,
             node @ Ast::Content(_) => node,
-            node @ Ast::Token(_) => node,
             node @ Ast::Ident(_) => node,
         }
     };
@@ -399,10 +582,11 @@ pub fn node_passes<'a>(node: Ast<'a>) -> Ast<'a> {
 
 
 pub fn passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
-    children
+    let children = children
         .into_iter()
         .map(node_passes)
-        .collect()
+        .collect();
+    child_list_passes(children)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -411,7 +595,7 @@ pub fn passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
 
 use crate::codegen::html;
 
-pub fn to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
+pub fn node_to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
     fn enclosure<'a>(
         start: &'a str,
         children: Vec<Ast<'a>>,
@@ -419,22 +603,26 @@ pub fn to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
     ) -> html::Node<'a> {
         html::Node::Fragment(
             vec![
-                vec![html::Node::new_text("{")],
-                children.into_iter().map(to_html).collect::<Vec<_>>(),
-                vec![html::Node::new_text("}")],
+                vec![html::Node::new_text(start)],
+                children.into_iter().map(node_to_html).collect::<Vec<_>>(),
+                vec![html::Node::new_text(end)],
             ].concat()
         )
     }
     fn map_children<'a>(children: Vec<Ast<'a>>) -> Vec<html::Node<'a>> {
-        children.into_iter().map(to_html).collect::<Vec<_>>()
+        children.into_iter().map(node_to_html).collect::<Vec<_>>()
     }
-    fn to_html_attributes<'a>(children: Vec<Ast<'a>>) -> HashMap<Text<'a>, Text<'a>> {
-        children
+    fn to_html_attributes<'a>(parameters: Vec<Ast<'a>>) -> HashMap<Text<'a>, Text<'a>> {
+        parameters
             .into_iter()
             .filter_map(|node| -> Option<Text<'a>> {
                 match node {
-                    Ast::Content(txt) => Some(Text(txt)),
-                    Ast::Token(txt) => Some(Text(txt)),
+                    Ast::Content(txt) if !txt.trim().is_empty() => {
+                        Some(Text(txt))
+                    }
+                    Ast::Token(txt) if !txt.trim().is_empty() => {
+                        Some(Text(txt))
+                    }
                     _ => None
                 }
             })
@@ -478,7 +666,7 @@ pub fn to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
             )
         },
         Ast::Enclosure(Enclosure {
-            kind: EnclosureKind::Module,
+            kind: EnclosureKind::Fragment,
             children
         }) => {
             html::Node::Fragment(map_children(children))
@@ -488,9 +676,9 @@ pub fn to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
             children
         }) => {
             enclosure(
-                "(",
+                "[",
                 children,
-                ")"
+                "]"
             )
         },
         Ast::Enclosure(Enclosure {
@@ -516,6 +704,19 @@ pub fn to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// AST TO CODEGEN
+///////////////////////////////////////////////////////////////////////////////
+
+pub fn to_html_pipeline<'a>(nodes: Vec<Ast<'a>>) -> Vec<crate::codegen::html::Node<'a>> {
+    let result = passes(nodes);
+    let result = result
+        .into_iter()
+        .map(crate::frontend::math::latex_pass)
+        .map(node_to_html)
+        .collect::<Vec<_>>();
+    result
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -524,12 +725,9 @@ pub fn to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
 
 pub fn dev() {
     let source = include_str!("../../source.txt");
+    // let result = to_html_pipeline(source);
     let result = crate::frontend::parser::run_parser(source);
     let result = passes(result);
-    let result = result
-        .into_iter()
-        .map(to_html)
-        .collect::<Vec<_>>();
     for node in result {
         println!("{:#?}", node);
     }

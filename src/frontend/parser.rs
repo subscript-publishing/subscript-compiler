@@ -29,9 +29,28 @@ pub enum Node<'a> {
 
 fn to_frontend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::frontend::ast::Ast<'a>> {
     use crate::frontend;
-    let mut results: LinkedList<frontend::Ast> = LinkedList::new();
+    let mut results: Vec<frontend::Ast> = Default::default();
     for child in children {
-        let mut last = results.back_mut();
+        let last = {
+            let mut valid_left_pos = None;
+            // let cursor = results.cursor_back_mut();
+            for ix in (0..results.len()).rev() {
+                let leftward = results
+                    .get(ix)
+                    .filter(|x| !x.is_whitespace());
+                if valid_left_pos.is_none() && leftward.is_some() {
+                    valid_left_pos = Some(ix);
+                    break;
+                }
+            }
+            // results.back_mut()
+            // unimplemented!()
+            if let Some(ix) = valid_left_pos {
+                results.get_mut(ix)
+            } else {
+                None
+            }
+        };
         let last_is_ident = last.as_ref().map(|x| x.is_ident()).unwrap_or(false);
         let last_is_tag = last.as_ref().map(|x| x.is_tag()).unwrap_or(false);
         // RETURN NONE IF CHILD IS ADDED TO SOME EXISTING NODE
@@ -56,7 +75,14 @@ fn to_frontend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::frontend::ast::Ast<
                 let new_node = frontend::Ast::Tag(frontend::Tag {
                     name,
                     parameters: None,
-                    children: children,
+                    children: vec![
+                        frontend::ast::Ast::Enclosure(
+                            frontend::Enclosure {
+                                kind: frontend::EnclosureKind::CurlyBrace,
+                                children,
+                            }
+                        )
+                    ],
                     rewrite_rules: Vec::new(),
                 });
                 *last = new_node;
@@ -65,7 +91,14 @@ fn to_frontend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::frontend::ast::Ast<
             Node::Enclosure(node) if last_is_tag && node.is_curly_brace() => {
                 let tag = last.unwrap();
                 let children = to_frontend_ir(node.children);
-                tag.unpack_tag_mut().unwrap().children.extend(children);
+                tag.unpack_tag_mut()
+                    .unwrap()
+                    .children.push(frontend::ast::Ast::Enclosure(
+                        frontend::Enclosure {
+                            kind: frontend::EnclosureKind::CurlyBrace,
+                            children,
+                        }
+                    ));
                 None
             }
             Node::Enclosure(node) => {
@@ -96,10 +129,10 @@ fn to_frontend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::frontend::ast::Ast<
             }
         };
         if let Some(new_child) = new_child {
-            results.push_back(new_child);
+            results.push(new_child);
         }
     }
-    results.into_iter().collect()
+    results
 }
 
 
@@ -154,9 +187,10 @@ fn normalize_ir<'a>(children: Vec<frontend::Ast<'a>>) -> Vec<frontend::Ast<'a>> 
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// PARSER DATA TYPES
+// PARSER BASICS
 ///////////////////////////////////////////////////////////////////////////////
 
+#[derive(Debug)]
 struct Zipper<T> {
     left: Option<T>,
     current: T,
@@ -193,10 +227,10 @@ fn tick<'a>(
     );
     match pattern {
         (_, "\\", Some(next)) if next == &"{"  => (
-            Mode::Ident("[math]"),
+            Mode::Ident(frontend::data::INLINE_MATH_TAG),
             ZipperConsumed::Current,
         ),
-        (_, "\\", Some(ident)) if !is_token(ident) => (
+        (_, "\\", Some(ident)) if !is_token(ident) && ident != &" " => (
             Mode::Ident(ident),
             ZipperConsumed::Right
         ),
@@ -236,12 +270,14 @@ type BeginEnclosureStack<'a> = VecDeque<(&'a str, LinkedList<Node<'a>>)>;
 fn feed_processor<'a>(words: Vec<(usize, &'a str)>) -> Vec<Node<'a>> {
     let mut enclosure_stack = BeginEnclosureStack::new();
     enclosure_stack.push_front(("[root]", Default::default()));
-    let mut skip_next = false;
+    let mut skip_next  = false;
+    let mut skip_to: Option<usize> = None;
     for word_pos in 0..words.len() {
         if skip_next {
             skip_next = false;
             continue;
         }
+        // GET LEFT
         let left = {
             if word_pos == 0 {
                 None
@@ -249,9 +285,15 @@ fn feed_processor<'a>(words: Vec<(usize, &'a str)>) -> Vec<Node<'a>> {
                 words.get(word_pos - 1)
             }
         };
-        let current = words.get(word_pos).unwrap();
+        // GET RIGHT
         let right = words.get(word_pos + 1);
+        // GET CURRENT
+        let current = words.get(word_pos).unwrap();
+        // FOR SKIPPING TO NEXT RIGHT
+        let right_pos: Option<usize> = right.map(|x| x.0);
+        // INIT ZIPPER
         let zipper = Zipper {left, current, right};
+        // GO!
         let out = tick(zipper);
         match out {
             (Mode::BeginEnclosure {kind}, _) => {
@@ -283,8 +325,13 @@ fn feed_processor<'a>(words: Vec<(usize, &'a str)>) -> Vec<Node<'a>> {
                 parent.1.push_back(node);
             }
         }
+        // FINALIZE
         match out.1 {
             ZipperConsumed::Right => {
+                assert!(right_pos.is_some());
+                // if let Some(right_pos) = right_pos {
+                //     skip_to = Some(right_pos);
+                // }
                 skip_next = true;
             }
             ZipperConsumed::Current => {}
@@ -308,6 +355,7 @@ fn break_up<'a>(word: &'a str) -> Vec<&'a str> {
     let mut sub_strings = Vec::new();
     let mut start_pos = 0;
     let mut skip_to: Option<usize> = None;
+    // for ix in 0..word.len()
     for ix in 0..word.len() {
         if let Some(pos) = skip_to {
             if ix < pos {
@@ -316,7 +364,11 @@ fn break_up<'a>(word: &'a str) -> Vec<&'a str> {
                 skip_to = None;
             }
         }
-        let sub_string = &word[ix..];
+        let sub_string = &word.get(ix..);
+        if sub_string.is_none() {
+            continue;
+        }
+        let sub_string = sub_string.unwrap();
         let break_point = TOKEN_SET
             .into_iter()
             .find_map(|tk| {
@@ -352,12 +404,12 @@ fn run_parser_internal_ast<'a>(source: &'a str) -> Vec<Node<'a>> {
         let mut index = 0;
         source
             .split_whitespace()
+            .intersperse(" ")
             .flat_map(|word| -> Vec<(usize, &str)> {
                 break_up(word)
                     .into_iter()
                     .map(|sub| {
                         let ix = index;
-                        let current = sub;
                         index = index + sub.len();
                         (ix, sub)
                     })
@@ -378,17 +430,9 @@ pub fn run_parser<'a>(source: &'a str) -> Vec<crate::frontend::Ast<'a>> {
         rewrite_rules: Rc::new(std::convert::identity),
         marker: std::marker::PhantomData
     };
-    let node = frontend::Ast::Enclosure(frontend::Enclosure {
-        kind: frontend::EnclosureKind::Module,
-        children,
-    });
+    let node = frontend::Ast::new_fragment(children);
     let node = node.child_list_transformer(Rc::new(transfomer));
-    match node {
-        frontend::Ast::Enclosure(frontend::Enclosure{kind: _, children}) => {
-            children
-        }
-        x => vec![x]
-    }
+    node.into_fragment()
 }
 
 
@@ -396,30 +440,17 @@ pub fn run_parser<'a>(source: &'a str) -> Vec<crate::frontend::Ast<'a>> {
 // DEV
 ///////////////////////////////////////////////////////////////////////////////
 
-pub fn dev() {
+fn dev_parser() {
     let source = include_str!("../../source.txt");
-    let words = {
-        let mut index = 0;
-        source
-            .split_whitespace()
-            .flat_map(|word| -> Vec<(usize, &str)> {
-                break_up(word)
-                    .into_iter()
-                    .map(|sub| {
-                        let ix = index;
-                        let current = sub;
-                        index = index + sub.len();
-                        (ix, sub)
-                    })
-                    .collect()
-            })
-            .filter(|x| !x.1.is_empty())
-            .collect::<Vec<_>>()
-    };
-    let top_level = feed_processor(words);
+    // let top_level = run_parser_internal_ast(source);
+    let top_level = run_parser(source);
     for node in top_level {
         println!("{:#?}", node);
     }
 }
 
+
+pub(crate) fn dev() {
+    dev_parser();
+}
 

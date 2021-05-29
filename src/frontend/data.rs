@@ -3,6 +3,8 @@ use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
 
+pub static INLINE_MATH_TAG: &'static str = "[inline-math]";
+
 #[derive(Debug, Clone)]
 pub enum LayoutKind {
     Block,
@@ -11,12 +13,15 @@ pub enum LayoutKind {
 
 pub type Atom<'a> = Cow<'a, str>;
 
-#[derive(Debug, Clone, Hash, Eq)]
+#[derive(Debug, Clone, Hash, Eq, Default)]
 pub struct Text<'a>(pub Cow<'a, str>);
 
 impl<'a> Text<'a> {
     pub fn new(value: &'a str) -> Self {
         Text(Cow::Borrowed(value))
+    }
+    pub fn from_string(value: String) -> Self {
+        Text(Cow::Owned(value))
     }
     pub fn len(&self) -> usize {
         self.0.len()
@@ -94,8 +99,8 @@ pub enum EnclosureKind<'a> {
     CurlyBrace,
     SquareParen,
     Parens,
-    /// Intenral
-    Module,
+    /// Intenral - akin to HTML fragment which is just a list of nodes.
+    Fragment,
     Error {
         open: &'a str,
         close: &'a str,
@@ -142,6 +147,15 @@ impl<'a, T> Enclosure<'a, T> {
         match self.kind {
             EnclosureKind::Error{..} => true,
             _ => false,
+        }
+    }
+}
+
+impl<'a> Enclosure<'a, crate::frontend::Ast<'a>> {
+    pub fn new_curly_brace(children: Vec<crate::frontend::Ast<'a>>) -> Self {
+        Enclosure {
+            kind: EnclosureKind::CurlyBrace,
+            children
         }
     }
 }

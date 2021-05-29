@@ -1,0 +1,91 @@
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    align-self: start;
+    text-rendering: optimizeLegibility;
+}
+
+h1 {
+    font-size: 1.9em;
+    font-weight: 600;
+    color: #303233;
+    width: 100%;
+    margin: 0;
+    padding: 0 12px;
+}
+h2 {
+    font-size: 1.7em;
+    font-weight: 600;
+    color: #303233;
+    width: 100%;
+    margin: 0;
+}
+h3 {
+    font-size: 1.6em;
+    color: #32403f;
+    font-weight: 400;
+    width: 100%;
+    margin: 0;
+}
+h4 {
+    font-size: 1.2em;
+    color: #32403f;
+    font-weight: 100;
+    width: 100%;
+    margin: 0;
+}
+h5 {
+    font-size: 1em;
+    color: #32403f;
+    font-weight: 100;
+    width: 100%;
+    margin: 0;
+}
+h6 {
+    font-size: 0.9em;
+    color: #32403f;
+    font-weight: 100;
+    width: 100%;
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    h1 {
+        font-size: 1.8em;
+    }
+    h2 {
+        font-size: 1.5em;
+    }
+    h3 {
+        font-size: 1em;
+    }
+    h4 {
+        font-size: 0.8em;
+    }
+    h5 {
+        font-size: 0.7em;
+    }
+    h6 {
+        font-size: 0.6em;
+    }
+}
+
+dl, ul, ol {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+p, a {
+    font-family: 'Roboto', serif;
+    text-rendering: optimizeLegibility;
+}
+
+pre {
+    font-family: 'Roboto Slab', monospace;
+    text-rendering: optimizeLegibility;
+}
+
+p {
+    margin: 0;
+}

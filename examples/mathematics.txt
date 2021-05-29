@@ -167,31 +167,23 @@
 }
 \note{
     \h3{Half-Angle Identities}
-    \mathblock{
-         \equation{
-        \split{
-            \sin \frac{α}{2} &= \pm \sqrt{\frac{1 - \cos(α)}{2}} \\
-            \cos \frac{α}{2} &= \pm \sqrt{\frac{1 + \cos(α)}{2}} \\
-            \tan \frac{α}{2} &= \pm \sqrt{\frac{1 - \cos(α)}{1 + \cos(α)}} \\
-                &= \frac{sin(α)}{1 + \cos(α)} \\
-                &= \frac{1 - \cos(α)}{sin(α)}
-        }
-        } 
+    \equation {
+        \sin \frac{α}{2} &= \pm \sqrt{\frac{1 - \cos(α)}{2}} \\
+        \cos \frac{α}{2} &= \pm \sqrt{\frac{1 + \cos(α)}{2}} \\
+        \tan \frac{α}{2} &= \pm \sqrt{\frac{1 - \cos(α)}{1 + \cos(α)}} \\
+            &= \frac{sin(α)}{1 + \cos(α)} \\
+            &= \frac{1 - \cos(α)}{sin(α)} 
     }
 }
 \note{
     \h3{Power-Reducing Identities}
-    \mathblock{
-         \equation{
-        \split{
-            \sin^2(α) &= \frac{1 - \cos(2α)}{2} \\
-            &\\
-            \cos^2(α) &= \frac{1 + \cos(2α)}{2} \\
-            &\\
-            \tan^2(α) &= \frac{1 - \cos(2α)}{1 + \cos(2α)}
-        }
-        } 
-    }
+     \equation{
+        \sin^2(α) &= \frac{1 - \cos(2α)}{2} \\
+        &\\
+        \cos^2(α) &= \frac{1 + \cos(2α)}{2} \\
+        &\\
+        \tan^2(α) &= \frac{1 - \cos(2α)}{1 + \cos(2α)}
+    } 
     \hr
     \equation{
         \sinα\cdot\cos α &= \frac{1}{2}\sin(2α)
@@ -329,16 +321,18 @@
 \note{
 \h2{Quick Facts}
 
-\li{Two vectors are equal if they share the same magnitude and direction. Initial points don't matter.}
-\li{
-        \note{
-            You can define a vector with two points.
-            \img[width=300px center src=../static/drawings/matrix/trinagle-def-of-a-vector.png]
+\ul {
+    \li{Two vectors are equal if they share the same magnitude and direction. Initial points don't matter.}
+    \li{
+            \note{
+                You can define a vector with two points.
+                \img[width=300px center src=../static/drawings/matrix/trinagle-def-of-a-vector.png]
+            }
         }
-    }
-\li{Do not divide vectors!}
-\li{\{\vec{v} \cdot \vec{v} = ||\vec{v}||^2 \implies \text{constant}}}
-\li{\{\vec{v} \cdot \left(\vec{v}\right)^\prime = 0}}
+    \li{Do not divide vectors!}
+    \li{\{\vec{v} \cdot \vec{v} = ||\vec{v}||^2 \implies \text{constant}}}
+    \li{\{\vec{v} \cdot \left(\vec{v}\right)^\prime = 0}}
+}
 
 }
 \h2{Vector Operations}
@@ -541,7 +535,9 @@
     \note{
         \h3{Parallel Vectors}
         
-        \li{When two vectors are parallel; they never intersect (duh).}
+        \ul {
+            \li{When two vectors are parallel; they never intersect (duh).}
+        }
         
         Given some vectors
         \equation{
@@ -560,7 +556,9 @@
     \note{
         \h3{Orthogonal Vectors}
         
-        \li{When two vectors are orthogonal; they meet at right angles.}
+        \ul {
+            \li{When two vectors are orthogonal; they meet at right angles.}
+        }
         
         Given some vectors
         \equation{
@@ -576,7 +574,9 @@
 
 \h2{Reparameterization of the position vector \{\vec{v}(t)} in terms of length \{S(t)}}
 
-\li{We can parametrize a curve with respect to arc length; because arc length arises naturally from the shape of the curve and does not depend on any coordinate system.}
+\ul {
+    \li{We can parametrize a curve with respect to arc length; because arc length arises naturally from the shape of the curve and does not depend on any coordinate system.}
+}
 
 \layout{
     \note{
@@ -588,29 +588,29 @@
                 = \bmatrix{ f(t) & g(t) & h(t) }
         }
         We can redefine \{\vec{v}} in terms of arc length between two endpoints
-        \mathblock{
-            \newcommand{\Long}{
+        \equation{
+            S(t)
+                &= \Long\\
+                &= \AltLong\\
+                &= \short
+        }
+        \!where {
+            {\Long} => {
                 \int_a^t \sqrt{
                     \left(f^\prime(u)\right)^2
                     \left(g^\prime(u)\right)^2
                     \left(h^\prime(u)\right)^2
                 }
             }
-            \newcommand{\AltLong}{
+            {\AltLong} => {
                 \int_a^t \sqrt{
                     \left(\frac{\mathrm{d}x}{\mathrm{d}u}\right)^2
                     \left(\frac{\mathrm{d}y}{\mathrm{d}u}\right)^2
                     \left(\frac{\mathrm{d}z}{\mathrm{d}u}\right)^2
                 }
             }
-            \newcommand{\short}{
+            {\short} => {
                 \int_a^t ||\left(v^\prime(u)\right)||
-            }
-            \equation{
-                S(t)
-                    &= \Long\\
-                    &= \AltLong\\
-                    &= \short
             }
         }
         That is, \{S(t)} is the length of the curve (\{C}) between \{r(a)} and \{r(b)}.
@@ -626,124 +626,120 @@
             \frac{\mathrm{d}S}{\mathrm{d}t} \equiv || v^\prime(t) ||
         }
         That is
-        \mathblock{
-            \newcommand{\Long}{
+        \equation{
+            \frac{\mathrm{d}S}{\mathrm{d}t}
+                &= \Long\\
+                &= \AltLong\\
+                &= \short
+        }
+        \!where {
+            {\Long} => {
                 \sqrt{
                     \left(f^\prime(u)\right)^2
                     \left(g^\prime(u)\right)^2
                     \left(h^\prime(u)\right)^2
                 }
             }
-            \newcommand{\AltLong}{
+            {\AltLong} => {
                 \sqrt{
                     \left(\frac{\mathrm{d}x}{\mathrm{d}u}\right)^2
                     \left(\frac{\mathrm{d}y}{\mathrm{d}u}\right)^2
                     \left(\frac{\mathrm{d}z}{\mathrm{d}u}\right)^2
                 }
             }
-            \newcommand{\short}{
+            {\short} => {
                 ||\left(v^\prime(u)\right)||
-            }
-            \equation{
-            \split{
-                \frac{\mathrm{d}S}{\mathrm{d}t}
-                    &= \Long\\
-                    &= \AltLong\\
-                    &= \short
-            }
             }
         }
     }
 }
 \h2{Vectors Derived From Some Curve Defined by \{\vec{v}}}
-\layout{
-    \note{
-        \img[width=300px center src=../static/drawings/matrix/curvature.png]
-    }
-    \note{
-        \h3{The Unit Vector}
-        \equation{
-            \hat{U} \equiv \frac{\vec{v}}{||\vec{v}||}
-        }
+\note{
+    \img[width=300px center src=../static/drawings/matrix/curvature.png]
+}
+\note{
+    \h3{The Unit Vector}
+    \equation{
+        \hat{U} \equiv \frac{\vec{v}}{||\vec{v}||}
     }
 }
-\layout{
-    \note{
-        \h3{The Unit Tangent Vector}
-        \equation{
-            \vec{T}
-                &\equiv \frac
-                    {v^\prime(t)}
-                    {||v^\prime(t)||}
-                &\equiv \frac
-                    {\mathrm{d}v}
-                    {\mathrm{d}S}
-        }
+\note{
+    \h3{The Unit Tangent Vector}
+    \equation{
+        \vec{T}
+            &\equiv \frac
+                {v^\prime(t)}
+                {||v^\prime(t)||}
+            &\equiv \frac
+                {\mathrm{d}v}
+                {\mathrm{d}S}
     }
-    \note{
-        \h3{The Unit Normal Vector}
-        \equation{
-            \vec{N} \equiv \frac
-                {T^\prime}
-                {||T^\prime||}
-        }
+}
+\note{
+    \h3{The Unit Normal Vector}
+    \equation{
+        \vec{N} \equiv \frac
+            {T^\prime}
+            {||T^\prime||}
     }
-    \note{
-        \h3{The Binormal Vector}
-        \equation{
-            \vec{B} \equiv \vec{T}\times\vec{N}
-        }
-        
+}
+\note{
+    \h3{The Binormal Vector}
+    \equation{
+        \vec{B} \equiv \vec{T}\times\vec{N}
+    }
+    
+    \ul {
         \li{Therefore, the binormal vector is orthogonal to both the tangent vector and the normal vector.}
         \li{The plane determined by the normal and binormal vectors N and B at a point P on a curve C is called the normal plane of C at P.}
         \li{The plane determined by the vectors T and N is called the osculating plane of C at P. The name comes from the Latin osculum, meaning “kiss.” It is the plane that comes closest to containing the part of the curve near P. (For a plane curve, the osculating plane is simply the plane that contains the curve.)}
-        
     }
-    \note{
-        \h3{Kappa - Curvature of a Vector}
-        \equation{
-            \kappa
-                &\equiv \left|\frac{\mathrm{d}T}{\mathrm{d}S}\right|
-                &\equiv \frac
-                    {\left| T^\prime \right|}
-                    {\left| r^\prime \right|}
-                &\equiv \frac
-                    {\left| r^\prime \times r^{\prime\prime} \right|}
-                    {\left| r^\prime \right|^3}
-        }
+    
+}
+\note{
+    \h3{Kappa - Curvature of a Vector}
+    \equation{
+        \kappa
+            &\equiv \left|\frac{\mathrm{d}T}{\mathrm{d}S}\right|
+            &\equiv \frac
+                {\left| T^\prime \right|}
+                {\left| r^\prime \right|}
+            &\equiv \frac
+                {\left| r^\prime \times r^{\prime\prime} \right|}
+                {\left| r^\prime \right|^3}
     }
-    \note{
-        \h3{Tangential & Normal Components of the Acceleration Vector of the Curve}
-        When we study the motion of a particle, it is often useful to resolve the acceleration into two components, one in the direction of the tangent and the other in the direction of the normal.
-        \equation{
-            a_{\vec{T}}
-                &= \frac{\mathrm{d}}{\mathrm{d}t} \left|\vec{v}\right|
-                = \frac{r^\prime \cdot r^{\prime\prime}}{|r^\prime|}\\
-            a_{\vec{N}}
-                &= \kappa \left|\vec{v}\right|^2
-                = \frac{\left|r^\prime \times r^{\prime\prime}\right|}{|r^\prime|}\\
+}
+\note{
+    \h3{Tangential & Normal Components of the Acceleration Vector of the Curve}
+    When we study the motion of a particle, it is often useful to resolve the acceleration into two components, one in the direction of the tangent and the other in the direction of the normal.
+    \equation{
+        a_{\vec{T}}
+            &= \frac{\mathrm{d}}{\mathrm{d}t} \left|\vec{v}\right|
+            = \frac{r^\prime \cdot r^{\prime\prime}}{|r^\prime|}\\
+        a_{\vec{N}}
+            &= \kappa \left|\vec{v}\right|^2
+            = \frac{\left|r^\prime \times r^{\prime\prime}\right|}{|r^\prime|}\\
 
-            \vec{a} &= a_{\vec{T}} \vec{T} + a_{\vec{N}} \vec{N}
-        }
-        Specifically
-        \equation{
-            \left.\aligned{
-            a_{\vec{T}}\\
-            a_{\vec{N}}
-            }\right\} \text{Tangential & Normal Components of $\vec{a}$}
-        }
+        \vec{a} &= a_{\vec{T}} \vec{T} + a_{\vec{N}} \vec{N}
+    }
+    Specifically
+    \equation{
+        \left.\aligned{
+        a_{\vec{T}}\\
+        a_{\vec{N}}
+        }\right\} \text{Tangential & Normal Components of $\vec{a}$}
     }
 }
 \h2{Vector Calculus}
-\layout{
-    \note{
-        \h3{The Position Vector \{\vec{r}(t)}}
-        (Original Function)
-    }
-    \note{
-        \h3{The Velocity Vector \{\vec{v}(t)}}
-        (First Derivative)
-        
+\note{
+    \h3{The Position Vector \{\vec{r}(t)}}
+    (Original Function)
+}
+\note{
+    \h3{The Velocity Vector \{\vec{v}(t)}}
+    (First Derivative)
+    
+    \ul {
         \li{The velocity vector is also the tangent vector and points in the direction of the tangent line.}
         \li{The speed of the particle at time t is the magnitude of the velocity vector, that is,
                 \equation{
@@ -751,12 +747,12 @@
                     _{\text{rate of change of distance with respect to time}}
                 }
             }
-        
     }
-    \note{
-        \h3{The Acceleration Vector \{\vec{a}(t)}}
-        (Second Derivative)
-    }
+    
+}
+\note{
+    \h3{The Acceleration Vector \{\vec{a}(t)}}
+    (Second Derivative)
 }
 
 
@@ -912,31 +908,31 @@
 \layout{
     \note{
         \h3{Length of a Curve}
-        \mathblock{
-            \newcommand{\Long}{
+        \mathblock {
+            \equation{
+                L &= \Long\\
+                  &= \AltLong\\
+                  &= \short\\
+                  &\implies \text{some constant}
+            }
+        }
+        \!where {
+            {\Long} => {
                 \int_a^b \sqrt{
                     \left(f^\prime(t)\right)^2
                     \left(g^\prime(t)\right)^2
                     \left(h^\prime(t)\right)^2
                 }
             }
-            \newcommand{\AltLong}{
+            {\AltLong} => {
                 \int_a^b \sqrt{
                     \left(\frac{\mathrm{d}x}{\mathrm{d}t}\right)^2
                     \left(\frac{\mathrm{d}y}{\mathrm{d}t}\right)^2
                     \left(\frac{\mathrm{d}z}{\mathrm{d}t}\right)^2
                 }
             }
-            \newcommand{\short}{
+            {\short} => {
                 \int_a^b ||\left(r^\prime(t)\right)||
-            }
-            \equation{
-            \split{
-                L &= \Long\\
-                  &= \AltLong\\
-                  &= \short\\
-                  &\implies \text{some constant}
-            }
             }
         }
     }
@@ -944,35 +940,37 @@
         \h3{The Arc Length Function}
         Suppose
         
-        \li{Given some curve \{C} defined by some vector \{\vec{r}} in \{\mathbb{R}^3}}
-        \li{where \{r^\prime} is continuous and \{C} is traversed exactly once as \{t} increases from \{a} to \{b}}
+        \ul {
+            \li{Given some curve \{C} defined by some vector \{\vec{r}} in \{\mathbb{R}^3}}
+            \li{where \{r^\prime} is continuous and \{C} is traversed exactly once as \{t} increases from \{a} to \{b}}
+        }
         
         We can define it's arc length function VIA
         \mathblock{
-            \newcommand{\Long}{
+            \equation{
+                S(t)
+                    &= \Long\\
+                    &= \AltLong\\
+                    &= \short
+            }
+        }
+        \!where {
+            {\Long} => {
                 \int_a^t \sqrt{
                     \left(f^\prime(u)\right)^2
                     \left(g^\prime(u)\right)^2
                     \left(h^\prime(u)\right)^2
                 }
             }
-            \newcommand{\AltLong}{
+            {\AltLong} => {
                 \int_a^t \sqrt{
                     \left(\frac{\mathrm{d}x}{\mathrm{d}u}\right)^2
                     \left(\frac{\mathrm{d}y}{\mathrm{d}u}\right)^2
                     \left(\frac{\mathrm{d}z}{\mathrm{d}u}\right)^2
                 }
             }
-            \newcommand{\short}{
+            {\short} => {
                 \int_a^t ||\left(r^\prime(u)\right)||
-            }
-            \equation{
-            \split{
-                S(t)
-                    &= \Long\\
-                    &= \AltLong\\
-                    &= \short
-            }
             }
         }
     }
@@ -1107,42 +1105,38 @@
     }
     \note{
         \h3{Midpoint Riemann Sum}
-        \mathblock{
-            \newcommand{\generalFormat}{
+        \equation{
+            A = \int_{a}^{b} f(x) \;\mathrm{d}x &\approx \generalFormat\\
+                &\approx \SigmaExampleOne\\
+                \text{or alternatively}&\\
+                A &\approx \SigmaExampleTwo
+        }
+        \!where {
+            {\generalFormat} => {
                 \sum_{\small{\cdots}}^{\small{\cdots}}\, \Delta{x}\cdot f\left(a + \text{“avg. of $x_i$ and $x_{i-1}$”} \cdot \Delta{x}\right)
             }
-            \newcommand{\SigmaExampleOne}{
+            {\SigmaExampleOne} => {
                 \sum_{i = 1}^{n}\, \Delta{x}\cdot f\left(a + \frac{x_{i - 1} + x_i}{2} \cdot \Delta{x}\right)
             }
-            \newcommand{\SigmaExampleTwo}{
+            {\SigmaExampleTwo} => {
                 \sum_{i = 0}^{n-1}\, \Delta{x}\cdot f\left(a + \frac{x_{i + 1} + x_i}{2} \cdot \Delta{x}\right)
-            }
-            \equation{
-            \split{
-                A = \int_{a}^{b} f(x) \;\mathrm{d}x &\approx \generalFormat\\
-                    &\approx \SigmaExampleOne\\
-                    \text{or alternatively}&\\
-                    A &\approx \SigmaExampleTwo
-            }
             }
         }
         \hr
         We can also do away with the index notation and simplify things.
-        \mathblock{
-            \newcommand{\SigmaExampleOne}{
+        \equation{
+            A = \int_{a}^{b} f(x) \;\mathrm{d}x
+                    &\approx \SigmaExampleOne\\
+                    &\approx \SigmaExampleTwo
+        }
+        \!where {
+            {\SigmaExampleOne} => {
                 \sum_{i = 1}^{n}\, \Delta{x}\cdot f\left(a + \frac{(i - 1) + i}{2} \cdot \Delta{x}\right) =
                 \sum_{i = 1}^{n}\, \Delta{x}\cdot f\left(a + \frac{2i - 1}{2} \cdot \Delta{x}\right)
             }
-            \newcommand{\SigmaExampleTwo}{
+            {\SigmaExampleTwo} => {
                 \sum_{i = 0}^{n-1}\, \Delta{x}\cdot f\left(a + \frac{(i + 1) + i}{2} \cdot \Delta{x}\right) =
                 \sum_{i = 0}^{n-1}\, \Delta{x}\cdot f\left(a + \frac{2i + 1}{2} \cdot \Delta{x}\right)
-            }
-            \equation{
-            \split{
-                A = \int_{a}^{b} f(x) \;\mathrm{d}x
-                    &\approx \SigmaExampleOne\\
-                    &\approx \SigmaExampleTwo
-            }
             }
         }
     }
@@ -1272,9 +1266,11 @@
         \note{
             \h4{Constraints on \{[1,n)}}
             
-            \li{Continuous}
-            \li{Positive}
-            \li{Decreasing (i.e. use derivative test)}
+            \ul {
+                \li{Continuous}
+                \li{Positive}
+                \li{Decreasing (i.e. use derivative test)}
+            }
             
         }
     }
@@ -1321,14 +1317,16 @@
         \note{
             \h4{Warning}
             
-            \li{If \{L > 0}, this only means that the limit comparison test can be used. You still need to determine if either \{A_n} or \{B_b} converges or diverges.}
-            \li{Therefore, this does not apply to any arbitrary rational function.}
+            \ul {
+                \li{If \{L > 0}, this only means that the limit comparison test can be used. You still need to determine if either \{A_n} or \{B_b} converges or diverges.}
+                \li{Therefore, this does not apply to any arbitrary rational function.}
+            }
             
         }
         \note{
             \h4{Notes}
-            \li{
-                For many series, we find a suitable comparison, \{B_n}, by keeping only the highest powers in the numerator and denominator of \{A_n}.
+            \ul {
+                \li{For many series, we find a suitable comparison, \{B_n}, by keeping only the highest powers in the numerator and denominator of \{A_n}.}
             }
         }
     }
@@ -1457,7 +1455,9 @@
     \note{
         \h3{Properties}
         
-        \li{If \{f(x)} and \{g(x)} are solutions; then \{f + g} is also a solution. Therefore, the most general solution to some second order homogeneous linear differential equations with constant coefficients would be \{y = C_1 f(x) + C_2 g(x)}. This is why, when you find two solutions to the characteristic equation \{r_1} and \{r_2} respectively, we write it like so.}
+        \ul {
+            \li{If \{f(x)} and \{g(x)} are solutions; then \{f + g} is also a solution. Therefore, the most general solution to some second order homogeneous linear differential equations with constant coefficients would be \{y = C_1 f(x) + C_2 g(x)}. This is why, when you find two solutions to the characteristic equation \{r_1} and \{r_2} respectively, we write it like so.}
+        }
         
     }
     \note{
