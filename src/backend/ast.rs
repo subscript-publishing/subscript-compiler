@@ -1,3 +1,4 @@
+//! Backend AST data types & related.
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;

@@ -1,3 +1,4 @@
+//! AST transformations.
 use std::iter::FromIterator;
 use std::collections::{HashSet, HashMap};
 use std::rc::Rc;

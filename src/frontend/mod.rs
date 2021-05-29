@@ -2,7 +2,6 @@ use std::rc::Rc;
 pub mod parser;
 pub mod ast;
 pub mod passes;
-pub mod highlighter;
 
 use ast::Node;
 
@@ -27,3 +26,6 @@ pub fn run_compiler_frontend<'a>(source: &'a str) -> Vec<crate::backend::Ast<'a>
     node.into_fragment()
 }
 
+pub fn run_highlighter<'a>(source: &'a str) {
+    let children = parser::parse_source(source);
+}
