@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use structopt::{StructOpt};
+use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -30,7 +30,7 @@ pub fn run_cli() {
             if let Some(parent) = output_path.parent() {
                 let _ = std::fs::create_dir_all(parent);
             }
-            let output = crate::pipeline::compile_to_html(&source);
+            let output = crate::compiler::compile_to_html(&source);
             std::fs::write(&output_path, output).unwrap();
         }
     }

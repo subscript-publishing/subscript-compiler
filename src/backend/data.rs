@@ -1,9 +1,11 @@
-//! Common data types
+//! Common data types used throughout the compiler.
 use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
 
+
 pub static INLINE_MATH_TAG: &'static str = "[inline-math]";
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // INDEXING DATA TYPES
@@ -43,6 +45,26 @@ impl CharRange {
                 let corrected_end = find_utf8_end(source, end_byte)?;
                 source.get(start_byte..=end_byte)
             })
+    }
+    pub fn into_annotated_tree<T>(self, data: T) -> Ann<T> {
+        Ann::from_range(self, data)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Ann<T> {
+    pub start: CharIndex,
+    pub end: CharIndex,
+    pub data: T,
+}
+
+impl<T> Ann<T> {
+    pub fn from_range(range: CharRange, data: T) -> Self {
+        Ann {
+            start: range.start,
+            end: range.end,
+            data,
+        }
     }
 }
 
@@ -207,8 +229,8 @@ impl<'a, T> Enclosure<'a, T> {
     }
 }
 
-impl<'a> Enclosure<'a, crate::frontend::Ast<'a>> {
-    pub fn new_curly_brace(children: Vec<crate::frontend::Ast<'a>>) -> Self {
+impl<'a> Enclosure<'a, crate::backend::Ast<'a>> {
+    pub fn new_curly_brace(children: Vec<crate::backend::Ast<'a>>) -> Self {
         Enclosure {
             kind: EnclosureKind::CurlyBrace,
             children

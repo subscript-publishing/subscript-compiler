@@ -3,9 +3,10 @@
 #![feature(slice_group_by)]
 #![allow(unused)]
 pub mod codegen;
-pub mod frontend;
+pub mod backend;
 pub mod cli;
-pub mod pipeline;
+pub mod compiler;
+pub mod frontend;
 
 
 fn main() {

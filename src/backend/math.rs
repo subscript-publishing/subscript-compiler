@@ -8,14 +8,14 @@ use std::iter::FromIterator;
 use std::collections::HashSet;
 use std::rc::Rc;
 use std::borrow::Cow;
-use crate::frontend::data::{
+use crate::backend::data::{
     Atom,
     Text,
     Enclosure,
     EnclosureKind,
     INLINE_MATH_TAG,
 };
-use crate::frontend::{Ast, Tag};
+use crate::backend::{Ast, Tag};
 
 pub static LATEX_ENVIRONMENT_NAME_LIST: &'static [&'static str] = &[
     "equation",
