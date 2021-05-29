@@ -9,11 +9,14 @@ pub mod compiler;
 pub mod frontend;
 
 
-fn main() {
+fn dev() {
     // ast::run();
     // backend::run();
-    frontend::parser::dev();
+    // frontend::parser::dev();
     // frontend::ast::dev();
     // codegen::html::dev();
-    // cli::run_cli();
+}
+
+fn main() {
+    cli::run_cli();
 }

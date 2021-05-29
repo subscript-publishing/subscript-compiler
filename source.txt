@@ -1,5 +1,4 @@
 \note {
-    \h1{}
     \h1{The Acceleration Vector \{\vec{v}} }
     \equation {
         \vec{a} =

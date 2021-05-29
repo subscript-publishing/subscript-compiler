@@ -7,7 +7,7 @@ pub mod highlighter;
 use ast::Node;
 
 /// Parses the given source code and returns a normalized backend AST vector.
-pub fn run_frontend<'a>(source: &'a str) -> Vec<crate::backend::Ast<'a>> {
+pub fn run_compiler_frontend<'a>(source: &'a str) -> Vec<crate::backend::Ast<'a>> {
     use crate::backend;
     // PARSE SOURCE CODE
     let children = parser::parse_source(source);
