@@ -141,7 +141,7 @@ pub fn render_document<'a>(html: Vec<Node<'a>>) -> String {
 // DEV
 ///////////////////////////////////////////////////////////////////////////////
 
-pub fn dev() {
+pub(crate) fn dev() {
     // let source = include_str!("../../source.txt");
     // let parsed = crate::backend::parser::run_parser(source);
     // let result = crate::backend::passes::to_html_pipeline(parsed);

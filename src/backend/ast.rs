@@ -428,7 +428,7 @@ impl<'a> Ast<'a> {
 // DEV
 ///////////////////////////////////////////////////////////////////////////////
 
-pub fn dev() {
+pub(crate) fn dev() {
     let source = include_str!("../../source.txt");
     // let result = to_html_pipeline(source);
     // let result = crate::backend::parser::run_parser(source);
