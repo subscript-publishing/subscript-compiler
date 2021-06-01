@@ -67,6 +67,11 @@ impl<T> Ann<T> {
             data,
         }
     }
+    pub fn into_char_range(&self) -> CharRange {
+        let start = self.start;
+        let end = self.end;
+        CharRange{start, end}
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -80,8 +85,135 @@ pub enum Node<'a> {
     String(Ann<Atom<'a>>),
 }
 
+
 impl<'a> Node<'a> {
-    // pub fn highlight_ranges(self) -> Vec<>
+    pub fn is_ident(&self) -> bool {
+        match self {
+            Node::Ident(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_enclosure(&self) -> bool {
+        match self {
+            Node::Enclosure(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_string(&self) -> bool {
+        match self {
+            Node::String(_) => true,
+            _ => false,
+        }
+    }
+    pub fn unwrap_ident<'b>(&'b self) -> Option<&'b Ann<Atom<'a>>> {
+        match self {
+            Node::Ident(x) => Some(x),
+            _ => None,
+        }
+    }
+    pub fn unwrap_enclosure<'b>(&'b self) -> Option<&'b Ann<Enclosure<'a, Node<'a>>>> {
+        match self {
+            Node::Enclosure(x) => Some(x),
+            _ => None,
+        }
+    }
+    pub fn unwrap_string<'b>(&'b self) -> Option<&'b Ann<Atom<'a>>> {
+        match self {
+            Node::String(x) => Some(x),
+            _ => None,
+        }
+    }
+    pub fn is_whitespace(&self) -> bool {
+        match self {
+            Node::String(txt) => {
+                let x: &str = &txt.data;
+                x.trim().is_empty()
+            },
+            _ => false
+        }
+    }
+    pub fn into_highlight_ranges(
+        self,
+        binder: Option<Atom<'a>>,
+    ) -> Vec<Highlight<'a>> {
+        match self {
+            Node::Enclosure(node) => {
+                let is_fragment = node.data.kind == EnclosureKind::Fragment;
+                let range = node.into_char_range();
+                let kind = match node.data.kind {
+                    EnclosureKind::CurlyBrace => HighlightKind::CurlyBrace,
+                    EnclosureKind::SquareParen => HighlightKind::SquareParen,
+                    EnclosureKind::Parens => HighlightKind::Parens,
+                    EnclosureKind::Fragment => HighlightKind::Fragment,
+                    EnclosureKind::Error{open, close} => HighlightKind::Error{
+                        open: Cow::Borrowed(open),
+                        close: Cow::Borrowed(close),
+                    },
+                };
+                let mut last_ident: Option<Atom> = None;
+                let children = node.data.children
+                    .into_iter()
+                    .flat_map(|x| {
+                        if x.is_ident() {
+                            let ident = x.unwrap_ident().unwrap().clone();
+                            last_ident = Some(ident.data);
+                        }
+                        if x.is_string() && !x.is_whitespace() {
+                            last_ident = None;
+                        }
+                        x.into_highlight_ranges(last_ident.clone())
+                    })
+                    .collect::<Vec<_>>();
+                let highlight = Highlight {
+                    kind,
+                    range,
+                    binder: binder.clone(),
+                };
+                if is_fragment {
+                    children
+                } else {
+                    let mut xs = vec![highlight];
+                    xs.extend(children);
+                    xs
+                }
+            }
+            Node::Ident(value) => {
+                let range = value.into_char_range();
+                let highlight = Highlight {
+                    kind: HighlightKind::Ident(value.data),
+                    range,
+                    binder: binder.clone(),
+                };
+                vec![highlight]
+            }
+            Node::String(value) => Vec::new(),
+        }
+    }
+    pub fn new_fragment(nodes: Vec<Self>) -> Self {
+        Node::Enclosure(Ann{
+            start: CharIndex::zero(),
+            end: CharIndex::zero(),
+            data: Enclosure {
+                kind: EnclosureKind::Fragment,
+                children: nodes,
+            }
+        })
+    }
+    /// Unpacks an `Node::Enclosure` with the `Fragment` kind or
+    /// returns a singleton vec.
+    pub fn into_fragment(self) -> Vec<Self> {
+        match self {
+            Node::Enclosure(Ann{
+                start,
+                end,
+                data: Enclosure{
+                    kind: EnclosureKind::Fragment,
+                    children
+                }
+            }) => children,
+            x => vec![x]
+        }
+    }
 }
 
 
@@ -90,19 +222,22 @@ impl<'a> Node<'a> {
 ///////////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Highlight {
-    range: CharRange,
-    scope: Scope,
+pub struct Highlight<'a> {
+    pub range: CharRange,
+    pub kind: HighlightKind<'a>,
+    pub binder: Option<Atom<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub enum Scope {
+pub enum HighlightKind<'a> {
     CurlyBrace,
     SquareParen,
     Parens,
+    Fragment,
     Error {
-        open: String,
-        close: String,
+        open: Atom<'a>,
+        close: Atom<'a>,
     },
+    Ident(Atom<'a>),
 }
 

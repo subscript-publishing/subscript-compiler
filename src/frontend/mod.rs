@@ -26,6 +26,8 @@ pub fn run_compiler_frontend<'a>(source: &'a str) -> Vec<crate::backend::Ast<'a>
     node.into_fragment()
 }
 
-pub fn run_highlighter<'a>(source: &'a str) {
+pub fn run_highlighter<'a>(source: &'a str) -> Vec<ast::Highlight<'a>> {
     let children = parser::parse_source(source);
+    let children = Node::new_fragment(children);
+    children.into_highlight_ranges(None)
 }
