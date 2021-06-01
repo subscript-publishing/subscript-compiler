@@ -10,3 +10,4 @@ either = "1.6.1"
 structopt = "0.3.21"
 lazy_static = "1.4.0"
 itertools = "0.10.0"
+serde = { version = "1.0", features = ["derive"] }
