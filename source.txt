@@ -1,1 +1,7 @@
-\h1{Hello world}
+
+\note {
+    \h1{hello world}
+    \equation {
+        x = \frac{1}{2}
+    }
+}

@@ -146,7 +146,7 @@ impl<'a> Node<'a> {
     }
     pub fn into_highlight_ranges(
         self,
-        nesting: usize,
+        nesting: Vec<Atom<'a>>,
         binder: Option<Atom<'a>>,
     ) -> Vec<Highlight<'a>> {
         match self {
@@ -164,6 +164,10 @@ impl<'a> Node<'a> {
                     },
                 };
                 let mut last_ident: Option<Atom> = None;
+                let mut child_nesting = nesting.clone();
+                if let Some(binder) = binder.clone() {
+                    child_nesting.push(binder);
+                }
                 let children = node.data.children
                     .into_iter()
                     .flat_map(|x| {
@@ -174,7 +178,7 @@ impl<'a> Node<'a> {
                         if x.is_string() && !x.is_whitespace() {
                             last_ident = None;
                         }
-                        x.into_highlight_ranges(nesting + 1, last_ident.clone())
+                        x.into_highlight_ranges(child_nesting.clone(), last_ident.clone())
                     })
                     .collect::<Vec<_>>();
                 let highlight = Highlight {
@@ -241,7 +245,7 @@ pub struct Highlight<'a> {
     pub range: CharRange,
     pub kind: HighlightKind<'a>,
     pub binder: Option<Atom<'a>>,
-    pub nesting: usize,
+    pub nesting: Vec<Atom<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
