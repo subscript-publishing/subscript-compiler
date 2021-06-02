@@ -263,7 +263,7 @@ fn into_ast<'a>(words: Vec<Word<'a>>) -> Vec<Node<'a>> {
     let mut skip_to: Option<usize> = None;
     for pos in 0..words.len() {
         if let Some(start_from) = skip_to {
-            if pos < start_from {
+            if pos <= start_from {
                 continue;
             } else {
                 skip_to = None;
@@ -318,11 +318,13 @@ fn into_ast<'a>(words: Vec<Word<'a>>) -> Vec<Node<'a>> {
             Mode::Ident(ident) => {
                 let mut parent = enclosure_stack.back_mut().unwrap();
                 let start = current.range.start;
-                let end = current.range.end;
+                let end = next
+                    .map(|x| x.1.range.end)
+                    .unwrap_or(current.range.end);
                 parent.2.push_back(Node::Ident(Ann {
                     start,
                     end,
-                    data: Atom::Borrowed(current.word)
+                    data: Atom::Borrowed(ident)
                 }));
             }
             Mode::NoOP => {
