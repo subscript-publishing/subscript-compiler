@@ -119,18 +119,22 @@ pub enum EnclosureKind<'a> {
     /// Intenral - akin to HTML fragment which is just a list of nodes.
     Fragment,
     Error {
-        open: &'a str,
-        close: &'a str,
+        open: Atom<'a>,
+        close: Option<Atom<'a>>,
     },
 }
 
 impl<'a> EnclosureKind<'a> {
-    pub fn new(open: &'a str, close: &'a str) -> EnclosureKind<'a> {
-        match (open, close) {
-            ("{", "}") => EnclosureKind::CurlyBrace,
-            ("[", "]") => EnclosureKind::SquareParen,
-            ("(", ")") => EnclosureKind::Parens,
-            (open, close) => EnclosureKind::Error {open, close},
+    pub fn new(open: Atom<'a>, close: Atom<'a>) -> EnclosureKind<'a> {
+        EnclosureKind::parse(open, Some(close))
+    }
+    pub fn parse(open: Atom<'a>, close: Option<Atom<'a>>) -> EnclosureKind<'a> {
+        let open_str: &str = &open;
+        match (open_str, close.as_ref()) {
+            ("{", Some(x)) if x == "}" => EnclosureKind::CurlyBrace,
+            ("[", Some(x)) if x == "]" => EnclosureKind::SquareParen,
+            ("(", Some(x)) if x == ")" => EnclosureKind::Parens,
+            (_, _) => EnclosureKind::Error {open, close},
         }
     }
 }

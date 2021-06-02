@@ -3,7 +3,7 @@ use std::iter::FromIterator;
 use std::collections::{HashSet, HashMap};
 use std::rc::Rc;
 use std::borrow::Cow;
-use crate::backend::data::{
+use crate::compiler::data::{
     Atom,
     Text,
     Enclosure,
@@ -208,6 +208,23 @@ pub fn node_to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
             ].concat()
         )
     }
+    fn enclosure_cow<'a>(
+        start: Atom<'a>,
+        children: Vec<Ast<'a>>,
+        end: Option<Atom<'a>>,
+    ) -> html::Node<'a> {
+        let end = match end {
+            Some(x) => x,
+            None => Cow::Owned(String::new()),
+        };
+        html::Node::Fragment(
+            vec![
+                vec![html::Node::Text(Text(start))],
+                children.into_iter().map(node_to_html).collect::<Vec<_>>(),
+                vec![html::Node::Text(Text(end))],
+            ].concat()
+        )
+    }
     fn map_children<'a>(children: Vec<Ast<'a>>) -> Vec<html::Node<'a>> {
         children.into_iter().map(node_to_html).collect::<Vec<_>>()
     }
@@ -284,7 +301,7 @@ pub fn node_to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
             kind: EnclosureKind::Error{open, close},
             children
         }) => {
-            enclosure(
+            enclosure_cow(
                 open,
                 children,
                 close

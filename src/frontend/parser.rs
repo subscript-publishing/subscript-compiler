@@ -12,13 +12,13 @@ use serde::de::value;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::backend;
-use crate::backend::data::*;
+use crate::compiler::data::*;
 use crate::frontend::ast::*;
 
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// PARSER BASICS
+// INTERNAL PARSER TYPES
 ///////////////////////////////////////////////////////////////////////////////
 
 #[derive(Debug)]
@@ -45,20 +45,222 @@ pub enum Mode<'a> {
     NoOP,
 }
 
-type BeginEnclosureStack<'a> = VecDeque<(&'a str, CharIndex, LinkedList<Node<'a>>)>;
+// type BeginEnclosureStack<'a> = VecDeque<(&'a str, CharIndex, LinkedList<Node<'a>>)>;
 
-
-
-// MAIN ENTRYPOINT FOR STRING TO PARSER AST 
-pub fn parse_source<'a>(source: &'a str) -> Vec<Node<'a>> {
-    into_ast(init_words(source, init_characters(source)))
+#[derive(Debug, Clone, PartialEq)]
+pub enum OpenToken {
+    CurlyBrace,
+    SquareParen,
+    Parens,
 }
+
+impl OpenToken {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            OpenToken::CurlyBrace => "{",
+            OpenToken::SquareParen => "[",
+            OpenToken::Parens => "(",
+        }
+    }
+    pub fn new<'a>(token: Atom<'a>) -> Option<OpenToken> {
+        let token: &str = &token;
+        match (token) {
+            ("{") => Some(OpenToken::CurlyBrace),
+            ("[") => Some(OpenToken::SquareParen),
+            ("(") => Some(OpenToken::Parens),
+            (_) => None,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct PartialBlock<'a> {
+    open_token: Ann<OpenToken>,
+    children: LinkedList<Node<'a>>,
+}
+
+#[derive(Debug, Clone)]
+enum Branch<'a> {
+    PartialBlock(PartialBlock<'a>),
+    Node(Node<'a>),
+}
+
+#[derive(Debug, Default)]
+pub struct ParseTree<'a> {
+    scopes: VecDeque<PartialBlock<'a>>,
+    finalized: LinkedList<Node<'a>>,
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// PARSE-TREE UTILS
+///////////////////////////////////////////////////////////////////////////////
+
+impl<'a> ParseTree<'a> {
+    fn add_child_node(&mut self, new_node: Node<'a>) {
+        match self.scopes.back_mut() {
+            Some(scope) => {
+                scope.children.push_back(new_node);
+            }
+            None => {
+                self.finalized.push_back(new_node);
+            }
+        }
+    }
+    fn open_new_enclosure(&mut self, new_enclosure: PartialBlock<'a>) {
+        self.scopes.push_back(new_enclosure);
+    }
+    fn close_last_enclosure(&mut self, close_word: &Word<'a>) {
+        match self.scopes.pop_back() {
+            Some(scope) => {
+                let new_node = Enclosure {
+                    kind: EnclosureKind::new(
+                        Cow::Borrowed(scope.open_token.data.as_str()),
+                        Cow::Borrowed(close_word.word),
+                    ),
+                    children: scope.children.into_iter().collect()
+                };
+                self.add_child_node(Node::Enclosure(Ann {
+                    start: scope.open_token.start,
+                    end: close_word.range.end,
+                    data: new_node,
+                }));
+            }
+            None => {
+                let new_node = Node::InvalidToken(Ann{
+                    start: close_word.range.start,
+                    end: close_word.range.end,
+                    data: Cow::Borrowed(close_word.word),
+                });
+                self.add_child_node(new_node);
+            }
+        }
+    }
+    pub fn finalize_all(self) -> Vec<Node<'a>> {
+        let ParseTree { mut scopes, mut finalized } = self;
+        let scopes = scopes.drain(..);
+        let xs = scopes
+            .map(|scope| {
+                let enclosure = Enclosure{
+                    kind: EnclosureKind::Error{
+                        open: Cow::Borrowed(scope.open_token.data.as_str()),
+                        close: None
+                    },
+                    children: scope.children.into_iter().collect()
+                };
+                Node::Enclosure(Ann {
+                    start: scope.open_token.start,
+                    end: scope.open_token.end,
+                    data: enclosure,
+                })
+            });
+        finalized.extend(xs);
+        finalized.into_iter().collect()
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CORE PARSER ENGINE
+///////////////////////////////////////////////////////////////////////////////
+
+
+impl<'a> ParseTree<'a> {
+    pub fn parse_words(words: Vec<Word<'a>>) -> Vec<Node<'a>> {
+        let mut parse_tree = ParseTree::default();
+        let mut skip_to: Option<usize> = None;
+        for pos in 0..words.len() {
+            if let Some(start_from) = skip_to {
+                if pos <= start_from {
+                    continue;
+                } else {
+                    skip_to = None;
+                }
+            }
+            let forward = |by: usize| {
+                words
+                    .get(pos + by)
+                    .filter(|w| !w.is_whitespace())
+                    .map(|w| (by, w))
+            };
+            let current = &words[pos];
+            let next = {
+                let mut entry = None::<(usize, &Word)>;
+                let words_left = words.len() - pos;
+                for offset in 1..words_left {
+                    assert!(entry.is_none());
+                    entry = forward(offset);
+                    if entry.is_some() {break}
+                }
+                entry
+            };
+            let (mode, consumed) = match_word(
+                current.word,
+                next.map(|(_, x)| x.word)
+            );
+            match mode {
+                Mode::BeginEnclosure {kind} => {
+                    let start_pos = current.range.start;
+                    let new_stack = PartialBlock {
+                        open_token: Ann {
+                            start: current.range.start,
+                            end: current.range.end,
+                            data: OpenToken::new(Cow::Borrowed(kind)).unwrap()
+                        },
+                        children: Default::default(),
+                    };
+                    parse_tree.open_new_enclosure(new_stack);
+                }
+                Mode::EndEnclosure {kind: close_token} => {
+                    parse_tree.close_last_enclosure(current);
+                }
+                Mode::Ident(ident) => {
+                    let start = current.range.start;
+                    let end = next
+                        .map(|x| x.1.range.end)
+                        .unwrap_or(current.range.end);
+                    let new_node = Node::Ident(Ann {
+                        start,
+                        end,
+                        data: Atom::Borrowed(ident)
+                    });
+                    parse_tree.add_child_node(new_node);
+                }
+                Mode::NoOP => {
+                    let start = current.range.start;
+                    let end = current.range.end;
+                    let new_node = Node::String(Ann {
+                        start,
+                        end,
+                        data: Cow::Borrowed(current.word)
+                    });
+                    parse_tree.add_child_node(new_node);
+                }
+            }
+            // FINALIZE
+            match consumed {
+                ZipperConsumed::Current => (),
+                ZipperConsumed::Right => {
+                    assert!(next.is_some());
+                    let offset = next.unwrap().0;
+                    skip_to = Some(pos + offset);
+                }
+            }
+        }
+        parse_tree.finalize_all()
+    }
+}
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // PARSER ENTRYPOINT
 ///////////////////////////////////////////////////////////////////////////////
 
+
+// MAIN ENTRYPOINT FOR STRING TO PARSER AST 
+pub fn parse_source<'a>(source: &'a str) -> Vec<Node<'a>> {
+    let words = init_words(source, init_characters(source));
+    ParseTree::parse_words(words)
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -105,7 +307,7 @@ fn process_word<'a>(values: Vec<(CharIndex, &'a str)>) -> Vec<Vec<(CharIndex, &'
 
 
 #[derive(Debug, Clone)]
-struct Character<'a> {
+pub struct Character<'a> {
     range: CharRange,
     char: &'a str,
 }
@@ -116,7 +318,7 @@ impl<'a> Character<'a> {
     }
 }
 
-fn init_characters<'a>(source: &'a str) -> Vec<Character<'a>> {
+pub fn init_characters<'a>(source: &'a str) -> Vec<Character<'a>> {
     use itertools::Itertools;
     let ending_byte_size = source.len();
     let words = source
@@ -151,7 +353,7 @@ fn init_characters<'a>(source: &'a str) -> Vec<Character<'a>> {
 }
 
 #[derive(Debug, Clone)]
-struct Word<'a> {
+pub struct Word<'a> {
     range: CharRange,
     word: &'a str,
 }
@@ -162,7 +364,7 @@ impl<'a> Word<'a> {
     }
 }
 
-fn init_words<'a>(source: &'a str, chars: Vec<Character<'a>>) -> Vec<Word<'a>> {
+pub fn init_words<'a>(source: &'a str, chars: Vec<Character<'a>>) -> Vec<Word<'a>> {
     use itertools::Itertools;
     // let mut output = Vec::new();
     let mut current_word_start = 0usize;
@@ -222,7 +424,7 @@ fn init_words<'a>(source: &'a str, chars: Vec<Character<'a>>) -> Vec<Word<'a>> {
 fn match_word<'a>(current: &'a str, next: Option<&'a str>) -> (Mode<'a>, ZipperConsumed) {
     match (current, next) {
         ("\\", Some(next)) if next == "{"  => (
-            Mode::Ident(backend::data::INLINE_MATH_TAG),
+            Mode::Ident(crate::compiler::data::INLINE_MATH_TAG),
             ZipperConsumed::Current,
         ),
         ("\\", Some(ident)) if !is_token(ident) && ident != " " => (
@@ -257,127 +459,6 @@ fn match_word<'a>(current: &'a str, next: Option<&'a str>) -> (Mode<'a>, ZipperC
     }
 }
 
-fn into_ast<'a>(words: Vec<Word<'a>>) -> Vec<Node<'a>> {
-    let mut enclosure_stack: BeginEnclosureStack = BeginEnclosureStack::new();
-    enclosure_stack.push_front(("[root]", CharIndex::zero(), Default::default()));
-    let mut skip_to: Option<usize> = None;
-    for pos in 0..words.len() {
-        if let Some(start_from) = skip_to {
-            if pos <= start_from {
-                continue;
-            } else {
-                skip_to = None;
-            }
-        }
-        let forward = |by: usize| {
-            words
-                .get(pos + by)
-                .filter(|w| !w.is_whitespace())
-                .map(|w| (by, w))
-        };
-        let current = &words[pos];
-        let next = {
-            let mut entry = None::<(usize, &Word)>;
-            let words_left = words.len() - pos;
-            for offset in 1..words_left {
-                assert!(entry.is_none());
-                entry = forward(offset);
-                if entry.is_some() {break}
-            }
-            entry
-        };
-        let (mode, consumed) = match_word(
-            current.word,
-            next.map(|(_, x)| x.word)
-        );
-        match mode {
-            Mode::BeginEnclosure {kind} => {
-                let start_pos = current.range.start;
-                enclosure_stack.push_back(
-                    (kind, start_pos, Default::default())
-                );
-            }
-            Mode::EndEnclosure {kind} => {
-                let mut last = enclosure_stack.pop_back().unwrap();
-                let mut parent = enclosure_stack.back_mut().unwrap();
-                let start = last.1;
-                let end = current.range.end;
-                let node = Node::Enclosure(Ann {
-                    start,
-                    end,
-                    data: Enclosure {
-                        kind: EnclosureKind::new(
-                            last.0,
-                            kind
-                        ),
-                        children: last.2.into_iter().collect(),
-                    }
-                });
-                parent.2.push_back(node);
-            }
-            Mode::Ident(ident) => {
-                let mut parent = enclosure_stack.back_mut().unwrap();
-                let start = current.range.start;
-                let end = next
-                    .map(|x| x.1.range.end)
-                    .unwrap_or(current.range.end);
-                parent.2.push_back(Node::Ident(Ann {
-                    start,
-                    end,
-                    data: Atom::Borrowed(ident)
-                }));
-            }
-            Mode::NoOP => {
-                let mut parent = enclosure_stack.back_mut().unwrap();
-                let start = current.range.start;
-                let end = current.range.end;
-                let node = Node::String(Ann {
-                    start,
-                    end,
-                    data: Cow::Borrowed(current.word)
-                });
-                parent.2.push_back(node);
-            }
-        }
-        // FINALIZE
-        match consumed {
-            ZipperConsumed::Current => (),
-            ZipperConsumed::Right => {
-                assert!(next.is_some());
-                let offset = next.unwrap().0;
-                skip_to = Some(pos + offset);
-            }
-        }
-    }
-    enclosure_stack
-        .into_iter()
-        .flat_map(|(_, _, xs)| xs)
-        .collect::<Vec<_>>()
-}
 
 
-pub(crate) fn dev() {
-    let source = include_str!("../../source.txt");
-    // use itertools::Itertools;
-    // let words = source
-    //     .grapheme_indices(true)
-    //     .enumerate()
-    //     .map(|(cix, (bix, x))| {
-    //         let index = CharIndex {
-    //             byte_index: bix,
-    //             char_index: cix,
-    //         };
-    //         (index, x)
-    //     })
-    //     .collect_vec();
-    // // let mut output = 
-    // for pos in 0..words.len() {
-    //     let current = words[pos];
-    //     let right = words.get(pos + 1);
-    // }
-    let results = into_ast(init_words(source, init_characters(source)));
-    for entry in results {
-        println!("{:#?}", entry);
-    }
-}
 

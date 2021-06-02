@@ -6,7 +6,7 @@ use std::iter::FromIterator;
 use std::vec;
 use serde::{Serialize, Deserialize};
 use crate::backend;
-use crate::backend::data::*;
+use crate::compiler::data::*;
 
 ///////////////////////////////////////////////////////////////////////////////
 // INDEXING DATA TYPES
@@ -95,6 +95,7 @@ pub enum Node<'a> {
     Ident(Ann<Atom<'a>>),
     Enclosure(Ann<Enclosure<'a, Node<'a>>>),
     String(Ann<Atom<'a>>),
+    InvalidToken(Ann<Atom<'a>>),
 }
 
 
@@ -159,8 +160,8 @@ impl<'a> Node<'a> {
                     EnclosureKind::Parens => HighlightKind::Parens,
                     EnclosureKind::Fragment => HighlightKind::Fragment,
                     EnclosureKind::Error{open, close} => HighlightKind::Error{
-                        open: Cow::Borrowed(open),
-                        close: Cow::Borrowed(close),
+                        open: open,
+                        close: close,
                     },
                 };
                 let mut last_ident: Option<Atom> = None;
@@ -199,6 +200,16 @@ impl<'a> Node<'a> {
                 let range = value.into_char_range();
                 let highlight = Highlight {
                     kind: HighlightKind::Ident(value.data),
+                    range,
+                    binder: binder.clone(),
+                    nesting,
+                };
+                vec![highlight]
+            }
+            Node::InvalidToken(value) => {
+                let range = value.into_char_range();
+                let highlight = Highlight {
+                    kind: HighlightKind::InvalidToken(value.data),
                     range,
                     binder: binder.clone(),
                     nesting,
@@ -256,8 +267,9 @@ pub enum HighlightKind<'a> {
     Fragment,
     Error {
         open: Atom<'a>,
-        close: Atom<'a>,
+        close: Option<Atom<'a>>,
     },
+    InvalidToken(Atom<'a>),
     Ident(Atom<'a>),
 }
 

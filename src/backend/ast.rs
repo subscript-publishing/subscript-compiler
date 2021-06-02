@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
 use std::vec;
-use crate::backend::data::{
+use crate::compiler::data::{
     Text,
     Enclosure,
     Atom,
@@ -286,6 +286,16 @@ impl<'a> Ast<'a> {
             txt
         }
         fn enclosure<'a>(
+            start: Atom<'a>,
+            content: String,
+            end: Option<Atom<'a>>,
+        ) -> String {
+            let end = end
+                .map(|x| x.to_string())
+                .unwrap_or(String::new());
+            format!("{}{}{}", start, content, end)
+        }
+        fn enclosure_str<'a>(
             start: &str,
             content: String,
             end: &str,
@@ -313,13 +323,13 @@ impl<'a> Ast<'a> {
                         children
                     }
                     EnclosureKind::CurlyBrace => {
-                        enclosure("{", children, "}")
+                        enclosure_str("{", children, "}")
                     }
                     EnclosureKind::Parens => {
-                        enclosure("(", children, ")")
+                        enclosure_str("(", children, ")")
                     }
                     EnclosureKind::SquareParen => {
-                        enclosure("[", children, "]")
+                        enclosure_str("[", children, "]")
                     }
                     EnclosureKind::Error{open, close} => {
                         enclosure(open, children, close)

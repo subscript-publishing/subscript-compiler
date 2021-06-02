@@ -1,5 +1,5 @@
 //! External Compiler API
-
+pub mod data;
 
 pub fn compile_to_html(source: &str) -> String {
     let parsed = crate::frontend::run_compiler_frontend(source);

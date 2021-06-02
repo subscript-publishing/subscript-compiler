@@ -1,11 +1,10 @@
-pub mod data;
 pub mod ast;
 pub mod tags;
 pub mod math;
 pub mod passes;
 
 pub use ast::{Ast, Tag};
-pub use data::{
+pub use crate::compiler::data::{
     Atom,
     CurlyBrace,
     SquareParen,

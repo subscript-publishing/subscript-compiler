@@ -5,7 +5,7 @@ use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
 use std::vec;
 use crate::backend;
-use crate::backend::data::*;
+use crate::compiler::data::*;
 use crate::frontend::ast::*;
 
 
@@ -100,9 +100,13 @@ pub fn to_unnormalized_backend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::bac
                 let new_node = backend::Ast::Ident(node.data);
                 Some(new_node)
             }
+            Node::InvalidToken(node) => {
+                let new_node = backend::Ast::Token(node.data);
+                Some(new_node)
+            }
             Node::String(node) => {
                 let mut is_token = false;
-                for sym in backend::data::TOKEN_SET {
+                for sym in crate::compiler::data::TOKEN_SET {
                     if *sym == &node.data {
                         is_token = true;
                         break;

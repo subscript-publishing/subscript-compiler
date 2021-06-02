@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
-use crate::backend::data::{LayoutKind, Text};
+use crate::compiler::data::{LayoutKind, Text};
 
 ///////////////////////////////////////////////////////////////////////////////
 // BASICS

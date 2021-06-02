@@ -8,7 +8,7 @@ use std::iter::FromIterator;
 use std::collections::HashSet;
 use std::rc::Rc;
 use std::borrow::Cow;
-use crate::backend::data::{
+use crate::compiler::data::{
     Atom,
     Text,
     Enclosure,
