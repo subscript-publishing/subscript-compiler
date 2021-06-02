@@ -146,6 +146,7 @@ impl<'a> Node<'a> {
     }
     pub fn into_highlight_ranges(
         self,
+        nesting: usize,
         binder: Option<Atom<'a>>,
     ) -> Vec<Highlight<'a>> {
         match self {
@@ -173,13 +174,14 @@ impl<'a> Node<'a> {
                         if x.is_string() && !x.is_whitespace() {
                             last_ident = None;
                         }
-                        x.into_highlight_ranges(last_ident.clone())
+                        x.into_highlight_ranges(nesting + 1, last_ident.clone())
                     })
                     .collect::<Vec<_>>();
                 let highlight = Highlight {
                     kind,
                     range,
                     binder: binder.clone(),
+                    nesting,
                 };
                 if is_fragment {
                     children
@@ -195,6 +197,7 @@ impl<'a> Node<'a> {
                     kind: HighlightKind::Ident(value.data),
                     range,
                     binder: binder.clone(),
+                    nesting,
                 };
                 vec![highlight]
             }
@@ -238,6 +241,7 @@ pub struct Highlight<'a> {
     pub range: CharRange,
     pub kind: HighlightKind<'a>,
     pub binder: Option<Atom<'a>>,
+    pub nesting: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
