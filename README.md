@@ -4,8 +4,13 @@ Not yet ready for public consumption; please check back in a couple of months.
 
 Ideally this will be usable for school this coming fall. 
 
+## Example
+
+The end result of the following example will be similar to what you see [over here](https://colbyn.github.io/school-notes-spring-2020).
 
 ```
+...
+
 \note[boxed] {
     \h3{Symmetric Equation of a Line}
     Given
