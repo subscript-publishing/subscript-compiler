@@ -139,7 +139,7 @@ fn init_characters<'a>(source: &'a str) -> Vec<Character<'a>> {
             .unwrap_or_else(|| {
                 CharIndex {
                     byte_index: ending_byte_size,
-                    char_index: pos
+                    char_index: pos + 1
                 }
             });
         output.push(Character{
