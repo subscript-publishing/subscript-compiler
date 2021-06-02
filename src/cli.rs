@@ -4,7 +4,7 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt(
     name="subscript",
-    about = "compile subscript markup into HTML or PDF (WIP)"
+    about = "compile subscript markup into HTML, or PDF (WIP)",
 )]
 enum Cli {
     Compile {

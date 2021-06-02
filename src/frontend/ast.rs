@@ -34,18 +34,30 @@ pub struct CharRange {
 }
 
 impl CharRange {
-    pub fn substrng<'a>(&self, source: &'a str) -> Option<&'a str> {
+    pub fn byte_index_range<'a>(&self, source: &'a str) -> Option<(usize, usize)> {
         fn find_utf8_end(s: &str, i: usize) -> Option<usize> {
             s.char_indices().nth(i).map(|(_, x)| x.len_utf8())
         }
         let start_byte = self.start.byte_index;
         let end_byte = self.end.byte_index;
-        source
+        let real_end_byte = source
             .get(start_byte..=end_byte)
+            .map(|_| end_byte)
             .or_else(|| {
                 let corrected_end = find_utf8_end(source, end_byte)?;
-                source.get(start_byte..=end_byte)
-            })
+                source
+                    .get(start_byte..=corrected_end)
+                    .map(|_| corrected_end)
+            });
+        real_end_byte.map(|l| (start_byte, l))
+    }
+    pub fn substrng<'a>(&self, source: &'a str) -> Option<&'a str> {
+        if let Some((start, end)) = self.byte_index_range(source) {
+            let sub_str = source.get(start..end).unwrap();
+            Some(sub_str)
+        } else {
+            None
+        }
     }
     pub fn into_annotated_tree<T>(self, data: T) -> Ann<T> {
         Ann::from_range(self, data)
