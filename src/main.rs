@@ -12,7 +12,7 @@ pub mod frontend;
 fn dev() {
     // ast::run();
     // backend::run();
-    frontend::parser::dev();
+    // frontend::parser::dev();
     // frontend::ast::dev();
     // codegen::html::dev();
     // let xs = frontend::run_highlighter(include_str!("../source.txt"));
@@ -22,6 +22,6 @@ fn dev() {
 }
 
 fn main() {
-    // cli::run_cli();
-    dev();
+    cli::run_cli();
+    // dev();
 }
