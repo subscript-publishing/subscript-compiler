@@ -46,13 +46,30 @@
     {z_1} => {\colorB{z_1}}
 }
 
-\note {
-    \h1{The Acceleration Vector \{\vec{v}} }
-    \equation {
-        \vec{a} =
-        \lim_{t\to 0} \frac{\vec{v}(t + \Delta t)-\vec{v}}{\Delta t} =
-        \frac
-            {\mathrm{d}\vec{v}}
-            {\mathrm{d}t}
+\h2{Vector Calculus}
+\layout[cols=3] {
+    \note {
+        \h3{The Position Vector \{\vec{r}}}
+        \equation {
+            \dots
+        }
+    }
+    \note {
+        \h3{The Velocity Vector \{\vec{v}}}
+        \equation {
+            \dots
+        }
+    }
+    \note {
+        \h3{The Acceleration Vector \{\vec{a}}}
+        \equation {
+            \vec{a} = \lim_{t\to 0}
+                \frac
+                    {\vec{v}(t + \Delta t)-\vec{v}}
+                    {\Delta t} =
+            \frac
+                {\mathrm{d}\vec{v}}
+                {\mathrm{d}t}
+        }
     }
 }
