@@ -4,7 +4,9 @@ use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
 use std::vec;
-use crate::backend;
+use itertools::Itertools;
+
+use crate::backend::{self, Ast};
 use crate::compiler::data::*;
 use crate::frontend::ast::*;
 
@@ -80,7 +82,8 @@ pub fn to_unnormalized_backend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::bac
                 let children = to_unnormalized_backend_ir(node.data.children);
                 tag.unpack_tag_mut()
                     .unwrap()
-                    .children.push(backend::ast::Ast::Enclosure(
+                    .children
+                    .push(backend::ast::Ast::Enclosure(
                         backend::Enclosure {
                             kind: backend::EnclosureKind::CurlyBrace,
                             children,
@@ -154,12 +157,12 @@ fn into_rewrite_rules<'a>(
     results
 }
 
-pub fn normalize_ir<'a>(children: Vec<backend::Ast<'a>>) -> Vec<backend::Ast<'a>> {
+pub fn block_level_normalize<'a>(children: Vec<backend::Ast<'a>>) -> Vec<backend::Ast<'a>> {
     let mut results = Vec::new();
     for child in children {
         if child.is_named_block("!where") {
             let child = child.into_tag().unwrap();
-            let last = results  
+            let last = results
                 .last_mut()
                 .and_then(backend::Ast::unpack_tag_mut);
             if let Some(last) = last {
@@ -174,4 +177,16 @@ pub fn normalize_ir<'a>(children: Vec<backend::Ast<'a>>) -> Vec<backend::Ast<'a>
         }
     }
     results
+}
+
+pub fn parameter_level_normalize(parameters: Vec<backend::Ast>) -> Vec<backend::Ast> {
+    parameters
+        .iter()
+        .filter_map(Ast::get_string)
+        .collect::<Vec<_>>()
+        .join("")
+        .split_whitespace()
+        .map(ToOwned::to_owned)
+        .map(|x| backend::Ast::Content(Cow::Owned(x)))
+        .collect::<Vec<_>>()
 }

@@ -144,6 +144,18 @@ impl<'a> Ast<'a> {
             }
         }
     }
+    pub fn get_enclosure_children(&self, kind: EnclosureKind) -> Option<&Vec<Ast<'a>>> {
+        match self {
+            Ast::Enclosure(x) if x.kind == kind => Some(x.children.as_ref()),
+            _ => None,
+        }
+    }
+    pub fn get_string(&'a self) -> Option<Cow<'a, str>> {
+        match self {
+            Ast::Content(cow) => Some(cow.clone()),
+            _ => None,
+        }
+    }
     pub fn is_named_block(&self, name: &str) -> bool {
         self.unpack_tag()
             .map(|x| *x.name == *name)
@@ -161,9 +173,15 @@ impl<'a> Ast<'a> {
             _ => false,
         }
     }
-    pub fn is_enclosure(&self) -> bool {
+    pub fn is_any_enclosure(&self) -> bool {
         match self {
             Ast::Enclosure(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_enclosure_of_kind(&self, kind: EnclosureKind) -> bool {
+        match self {
+            Ast::Enclosure(Enclosure { kind, .. }) => &kind == &kind,
             _ => false,
         }
     }
