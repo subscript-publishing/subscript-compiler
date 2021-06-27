@@ -124,6 +124,17 @@ impl<'a> Node<'a> {
     }
 }
 
+/// Convert **only** the given IR tree to HTML.
+pub fn render_ast_only<'a>(html: Vec<Node<'a>>) -> String {
+    html
+        .into_iter()
+        .map(Node::to_html_str)
+        .map(|x| x.0)
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+/// Render the entire document.
 pub fn render_document<'a>(html: Vec<Node<'a>>) -> String {
     let body = html
         .into_iter()
@@ -135,6 +146,17 @@ pub fn render_document<'a>(html: Vec<Node<'a>>) -> String {
     let html = html.replace("{{deps}}", include_str!("../../assets/deps.html"));
     let html = html.replace("{{css}}", include_str!("../../assets/styling.css"));
     html.replace("{{body}}", &body)
+}
+
+/// Runtime dependencies; including local (embedded) css styling.
+pub fn runtime_dependencies() -> String {
+    let mut html = String::from(include_str!("../../assets/deps.html"));
+    let css = format!(
+        "<style>{}</style>",
+        include_str!("../../assets/styling.css")
+    );
+    html.push_str(&css);
+    html
 }
 
 ///////////////////////////////////////////////////////////////////////////////
