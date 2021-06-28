@@ -189,6 +189,30 @@ pub fn passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// AST ANNOTATE PASSES
+///////////////////////////////////////////////////////////////////////////////
+
+// pub fn annotate_node<'a>(ast: Ast<'a>) -> Ast<'a> {
+//     match ast {
+//         Ast::Tag(tag) => {
+//             unimplemented!()
+//         }
+//         Ast::Enclosure(node) => {
+//             unimplemented!()
+//         }
+//         Ast::Ident(node) => {
+//             unimplemented!()
+//         }
+//         Ast::Content(value) => {
+//             unimplemented!()
+//         }
+//         Ast::Token(value) => {
+//             unimplemented!()
+//         }
+//     }
+// }
+
+///////////////////////////////////////////////////////////////////////////////
 // AST-TO-CODEGEN PASSES
 ///////////////////////////////////////////////////////////////////////////////
 

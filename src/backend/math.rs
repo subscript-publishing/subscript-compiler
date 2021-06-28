@@ -83,7 +83,7 @@ pub fn latex_pass<'a>(node: Ast<'a>) -> Ast<'a> {
                 .into_iter()
                 .flat_map(Ast::unblock)
                 .map(to_valid_latex_math)
-                .map(Ast::to_string)
+                .map(|x| x.to_string())
                 .collect::<Vec<_>>()
                 .join("");
             let start = "\\begin{equation}\\begin{split}";
@@ -100,7 +100,7 @@ pub fn latex_pass<'a>(node: Ast<'a>) -> Ast<'a> {
                 .into_iter()
                 // .flat_map(Ast::unblock)
                 .map(to_valid_latex_math)
-                .map(Ast::to_string)
+                .map(|x| x.to_string())
                 .collect::<Vec<_>>()
                 .join("");
             Ast::Content(Cow::Owned(format!(

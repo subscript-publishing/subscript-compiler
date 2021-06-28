@@ -291,7 +291,7 @@ impl<'a> Ast<'a> {
             _ => false
         }
     }
-    pub fn to_string(self) -> String {
+    pub fn to_string(&self) -> String {
         fn pack<'a>(x: Cow<'a, str>) -> String {
             match x {
                 Cow::Borrowed(x) => String::from(x),
@@ -322,21 +322,21 @@ impl<'a> Ast<'a> {
         }
         match self {
             Ast::Tag(tag) => {
-                let name = pack(tag.name);
+                let name = pack(tag.name.clone());
                 let children = tag.children
-                    .into_iter()
-                    .map(Ast::to_string)
+                    .iter()
+                    .map(|x| x.to_string())
                     .collect::<Vec<_>>()
                     .join("");
                 format!("\\{}{}", name, children)
             }
             Ast::Enclosure(block) => {
                 let children = block.children
-                    .into_iter()
-                    .map(Ast::to_string)
+                    .iter()
+                    .map(|x| x.to_string())
                     .collect::<Vec<_>>()
                     .join("");
-                match block.kind {
+                match block.kind.clone() {
                     EnclosureKind::Fragment => {
                         children
                     }
@@ -354,9 +354,9 @@ impl<'a> Ast<'a> {
                     }
                 }
             }
-            Ast::Ident(x) => ident(x),
-            Ast::Content(x) => pack(x),
-            Ast::Token(x) => pack(x),
+            Ast::Ident(x) => ident(x.clone()),
+            Ast::Content(x) => pack(x.clone()),
+            Ast::Token(x) => pack(x.clone()),
         }
     }
     pub fn unblock(self) -> Vec<Self> {

@@ -9,19 +9,6 @@ pub fn compile_to_html(source: &str) -> String {
     crate::codegen::html::render_document(result)
 }
 
-#[derive(Debug, Clone)]
-pub enum SourceEntry {
-    Html(String),
-    Pdf(Vec<String>),
+pub fn yield_table_of_contents(source: &str) {
+    // crate::frontend::run_compiler_frontend(source)
 }
-
-pub fn compile_entries(sources: Vec<SourceEntry>) {
-    let outputs = sources
-        .into_iter()
-        .map(|src| {
-            
-        })
-        .collect::<Vec<_>>();
-    unimplemented!()
-}
-
