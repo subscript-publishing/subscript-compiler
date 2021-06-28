@@ -96,27 +96,18 @@ fn node_passes<'a>(node: Node<'a>) -> Node<'a> {
         }
     }
     fn process_tags<'a>(env: NodeEnvironment, mut tag: Tag<'a>) -> Tag<'a> {
-        fn unblock_children<'a>(children: Vec<Node<'a>>) -> Vec<Node<'a>> {
-            children
-                .into_iter()
-                .flat_map(|child| -> Vec<Node<'a>> {
-                    match child {
-                        Node::Enclosure(Ann{
-                            data: block,
-                            ..
-                        }) if block.kind == EnclosureKind::CurlyBrace => {
-                            block.children
-                        }
-                        _ => vec![child]
-                    }
-                })
-                .collect()
-        }
         let name: &str = &(tag.name.data);
+        // DON'T DO THIS IN A MATH ENV
         if env.is_default_env() {
-            tag.children = unblock_children(tag.children);
+            // Apply this after any multi-argument specific tag processing.
+            // Because e.g. `\h1{hello }{world}` will become `<h1>hello world</h1>`.
+            // Really only a problem if we happen to be converting to LaTeX.
+            tag.children = tag.children
+                .into_iter()
+                .flat_map(Node::unblock)
+                .collect();
         }
-        // REWRITE SUBSCRIPT ONLY TAGS INTO VALID HTML
+        // REWRITE SUBSCRIPT TAGS INTO VALID HTML
         if name == "note" {
             tag.name = Ann::unannotated(Cow::Borrowed("div"));
             tag.insert_unannotated_parameter("macro=note");
