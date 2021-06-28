@@ -5,6 +5,9 @@ use std::iter::FromIterator;
 
 
 pub static INLINE_MATH_TAG: &'static str = "[inline-math]";
+pub static BLOCK_MATH_TAGS: &[&'static str] = &[
+    "equation"
+];
 
 
 

@@ -168,6 +168,32 @@ impl<'a> Tag<'a> {
     }
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct NodeEnvironment<'a> {
+    nesting: Vec<Atom<'a>>,
+}
+
+impl<'a> NodeEnvironment<'a> {
+    pub fn push_parent(&mut self, name: Atom<'a>) {
+        self.nesting.push(name)
+    }
+    pub fn is_math_env(&self) -> bool {
+        self.nesting
+            .iter()
+            .any(|x| {
+                let option1 = x == INLINE_MATH_TAG;
+                let option2 = BLOCK_MATH_TAGS.iter().any(|y| {
+                    x == y
+                });
+                option1 || option2
+            })
+    }
+    pub fn is_default_env(&self) -> bool {
+        !self.is_math_env()
+    }
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // AST
 ///////////////////////////////////////////////////////////////////////////////
@@ -392,19 +418,23 @@ impl<'a> Node<'a> {
     }
 
     /// Bottom up 'node to ndoe' transformation.
-    pub fn transform<F: Fn(Node<'a>) -> Node<'a>>(self, f: Rc<F>) -> Self {
+    pub fn transform<F: Fn(NodeEnvironment<'a>, Node<'a>) -> Node<'a>>(
+        self,
+        mut env: NodeEnvironment<'a>, f: Rc<F>
+    ) -> Self {
         match self {
             Node::Tag(node) => {
+                env.push_parent(node.name.data.clone());
                 let children = node.children
                     .into_iter()
-                    .map(|x| x.transform(f.clone()))
+                    .map(|x| x.transform(env.clone(), f.clone()))
                     .collect();
                 let rewrite_rules = node.rewrite_rules
                     .into_iter()
                     .map(|rule| -> RewriteRule<Node<'a>> {
                         RewriteRule {
-                            from: rule.from.transform(f.clone()),
-                            to: rule.to.transform(f.clone()),
+                            from: rule.from.transform(env.clone(), f.clone()),
+                            to: rule.to.transform(env.clone(), f.clone()),
                         }
                     })
                     .collect();
@@ -414,30 +444,30 @@ impl<'a> Node<'a> {
                     children,
                     rewrite_rules,
                 };
-                f(Node::Tag(node))
+                f(env.clone(), Node::Tag(node))
             }
             Node::Enclosure(node) => {
                 let kind = node.data.kind;
                 let range = node.range;
                 let children = node.data.children
                     .into_iter()
-                    .map(|x| x.transform(f.clone()))
+                    .map(|x| x.transform(env.clone(), f.clone()))
                     .collect();
                 let data = Enclosure{
                     kind,
                     children,
                 };
                 let node = Node::Enclosure(Ann::join(range, data));
-                f(node)
+                f(env.clone(), node)
             }
             node @ Node::Ident(_) => {
-                f(node)
+                f(env.clone(), node)
             }
             node @ Node::String(_) => {
-                f(node)
+                f(env.clone(), node)
             }
             node @ Node::InvalidToken(_) => {
-                f(node)
+                f(env.clone(), node)
             }
         }
     }

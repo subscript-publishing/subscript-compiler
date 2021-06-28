@@ -95,26 +95,7 @@ fn node_passes<'a>(node: Node<'a>) -> Node<'a> {
             rewrite_rules: Vec::new(),
         }
     }
-    fn process_tags<'a>(mut tag: Tag<'a>) -> Tag<'a> {
-        let extract_tags = HashSet::<&str>::from_iter(vec![
-            "note",
-            "layout",
-            "h1",
-            "h2",
-            "h3",
-            "h4",
-            "h5",
-            "h6",
-            "li",
-            "ul",
-            "ol",
-            "table",
-            "tr",
-            "td",
-            "p",
-            "u",
-            "b",
-        ]);
+    fn process_tags<'a>(env: NodeEnvironment, mut tag: Tag<'a>) -> Tag<'a> {
         fn unblock_children<'a>(children: Vec<Node<'a>>) -> Vec<Node<'a>> {
             children
                 .into_iter()
@@ -132,7 +113,7 @@ fn node_passes<'a>(node: Node<'a>) -> Node<'a> {
                 .collect()
         }
         let name: &str = &(tag.name.data);
-        if extract_tags.contains(name) {
+        if env.is_default_env() {
             tag.children = unblock_children(tag.children);
         }
         // REWRITE SUBSCRIPT ONLY TAGS INTO VALID HTML
@@ -145,11 +126,11 @@ fn node_passes<'a>(node: Node<'a>) -> Node<'a> {
         }
         tag
     }
-    let f = |node: Node<'a>| -> Node<'a> {
+    let f = |env: NodeEnvironment, node: Node<'a>| -> Node<'a> {
         match node {
             Node::Tag(tag) => {
                 let tag = apply_rewrite_rules(tag);
-                let tag = process_tags(tag);
+                let tag = process_tags(env, tag);
                 Node::Tag(tag)
             }
             node @ Node::Enclosure(_) => node,
@@ -158,7 +139,7 @@ fn node_passes<'a>(node: Node<'a>) -> Node<'a> {
             node @ Node::InvalidToken(_) => node,
         }
     };
-    node.transform(Rc::new(f))
+    node.transform(NodeEnvironment::default(), Rc::new(f))
 }
 
 

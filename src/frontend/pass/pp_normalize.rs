@@ -206,19 +206,15 @@ pub fn parameter_level_normalize_pass(node: Node) -> Node {
 pub fn run_compiler_frontend<'a>(source: &'a str) -> Vec<Node<'a>> {
     // PARSE SOURCE CODE
     let children = crate::frontend::parser::parse_source(source);
-    // // TO BACKEND AST
+    // NORMALIZE IR
     let children = to_unnormalized_backend_ir(children);
-    // NORMALIZE SETUP
-    // let transfomer = backend::ast::ChildListTransformer {
-    //     parameters: Rc::new(pass::pp_normalize::parameter_level_normalize),
-    //     block: Rc::new(pass::pp_normalize::block_level_normalize),
-    //     rewrite_rules: Rc::new(std::convert::identity),
-    //     marker: std::marker::PhantomData
-    // };
-    // // NORMALIZE BACKNED IR
+    // NORMALIZE IR
     let node = Node::new_fragment(children)
         .transform_children(Rc::new(block_level_normalize))
-        .transform(Rc::new(parameter_level_normalize_pass));
-    // // DONE
+        .transform(
+            NodeEnvironment::default(),
+            Rc::new(|_, x| parameter_level_normalize_pass(x))
+        );
+    // DONE
     node.into_fragment()
 }

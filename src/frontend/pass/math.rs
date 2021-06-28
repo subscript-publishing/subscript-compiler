@@ -15,7 +15,7 @@ use crate::frontend::data::{
     EnclosureKind,
     INLINE_MATH_TAG,
 };
-use crate::frontend::ast::{Ann, Node, Tag};
+use crate::frontend::ast::{Ann, Node, NodeEnvironment, Tag};
 
 pub static LATEX_ENVIRONMENT_NAME_LIST: &'static [&'static str] = &[
     "equation",
@@ -52,7 +52,7 @@ fn to_valid_latex_math<'a>(node: Node<'a>) -> Node<'a> {
         ])
     }
     // FUNCTION
-    fn f<'a>(x: Node<'a>) -> Node<'a> {
+    fn f<'a>(env: NodeEnvironment, x: Node<'a>) -> Node<'a> {
         match x {
             Node::Tag(tag) if LATEX_ENV_NAMES.contains(tag.name()) => {
                 let env_name = *LATEX_ENV_NAMES.get(tag.name()).unwrap();
@@ -72,7 +72,7 @@ fn to_valid_latex_math<'a>(node: Node<'a>) -> Node<'a> {
         }
     }
     // GO! (BOTTOM UP)
-    node.transform(Rc::new(f))
+    node.transform(NodeEnvironment::default(), Rc::new(f))
 }
 
 
