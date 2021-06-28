@@ -3,6 +3,7 @@ use std::iter::FromIterator;
 use std::collections::{HashSet, HashMap};
 use std::rc::Rc;
 use std::borrow::Cow;
+use serde::{Serialize, Deserialize};
 use crate::compiler::data::{
     Atom,
     Text,
@@ -14,7 +15,8 @@ use crate::compiler::data::{
 use crate::backend::{Ast, Tag};
 use crate::backend::ast::ChildListTransformer;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HeadingKind {
     H1,
     H2,
@@ -38,7 +40,7 @@ impl HeadingKind {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Heading {
     kind: HeadingKind,
     text: String,
