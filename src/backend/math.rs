@@ -38,13 +38,13 @@ fn to_valid_latex_math<'a>(node: Ast<'a>) -> Ast<'a> {
         Ast::new_fragment(vec![
             Ast::Tag(Tag::new("begin", vec![
                 Ast::Enclosure(Enclosure::new_curly_brace(vec![
-                    Ast::Content(Cow::Borrowed(env_name))
+                    Ast::String(Cow::Borrowed(env_name))
                 ]))
             ])),
             Ast::new_fragment(children),
             Ast::Tag(Tag::new("end", vec![
                 Ast::Enclosure(Enclosure::new_curly_brace(vec![
-                    Ast::Content(Cow::Borrowed(env_name))
+                    Ast::String(Cow::Borrowed(env_name))
                 ]))
             ])),
         ])
@@ -88,7 +88,7 @@ pub fn latex_pass<'a>(node: Ast<'a>) -> Ast<'a> {
                 .join("");
             let start = "\\begin{equation}\\begin{split}";
             let end = "\\end{split}\\end{equation}";
-            Ast::Content(Cow::Owned(format!(
+            Ast::String(Cow::Owned(format!(
                 "\\[{}{}{}\\]",
                 start,
                 node,
@@ -103,7 +103,7 @@ pub fn latex_pass<'a>(node: Ast<'a>) -> Ast<'a> {
                 .map(|x| x.to_string())
                 .collect::<Vec<_>>()
                 .join("");
-            Ast::Content(Cow::Owned(format!(
+            Ast::String(Cow::Owned(format!(
                 "\\({}\\)",
                 node,
             )))
@@ -123,8 +123,7 @@ pub fn latex_pass<'a>(node: Ast<'a>) -> Ast<'a> {
             Ast::Enclosure(block)
         }
         node @ Ast::Ident(_) => node,
-        node @ Ast::Content(_) => node,
-        node @ Ast::Token(_) => node,
+        node @ Ast::String(_) => node,
     }
 }
 

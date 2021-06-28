@@ -92,9 +92,22 @@ impl<T> Ann<T> {
 
 #[derive(Debug, Clone)]
 pub enum Node<'a> {
+    /// Some identifier that may or may not be followed by square parentheses
+    /// and/or a curly brace enclosure. E.g. `\name`.
     Ident(Ann<Atom<'a>>),
+    /// An enclosure can be a multitude of things:
+    /// * Some syntactic enclosure: 
+    ///     * Curly braces
+    ///     * Parentheses
+    ///     * Square parentheses
+    /// * Some error with it’s invalid start & end token (i.e. a opening `[` and closing `}`)
+    /// * Additionally, after parsing, an enclosure can also be a fragment (i.e. a list of AST nodes)
     Enclosure(Ann<Enclosure<'a, Node<'a>>>),
+    /// Some string of arbitrary characters or a single special token.
     String(Ann<Atom<'a>>),
+    /// Some unbalanced token that isn’t associated with an enclosure. 
+    /// In Subscript, enclosure symbols must be balanced. If the author
+    /// must use such in their publications, then use the tag version. 
     InvalidToken(Ann<Atom<'a>>),
 }
 

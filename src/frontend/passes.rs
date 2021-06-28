@@ -104,7 +104,7 @@ pub fn to_unnormalized_backend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::bac
                 Some(new_node)
             }
             Node::InvalidToken(node) => {
-                let new_node = backend::Ast::Token(node.data);
+                let new_node = backend::Ast::String(node.data);
                 Some(new_node)
             }
             Node::String(node) => {
@@ -116,9 +116,9 @@ pub fn to_unnormalized_backend_ir<'a>(children: Vec<Node<'a>>) -> Vec<crate::bac
                     }
                 }
                 if is_token {
-                    Some(backend::Ast::Token(node.data))
+                    Some(backend::Ast::String(node.data))
                 } else {
-                    Some(backend::Ast::Content(node.data))
+                    Some(backend::Ast::String(node.data))
                 }
             }
         };
@@ -141,7 +141,7 @@ fn into_rewrite_rules<'a>(
         let left = children.get(ix - 1);
         let current = children
             .get(ix)
-            .and_then(|x| x.unpack_token())
+            .and_then(|x| x.unpack_string())
             .filter(|x| *x == "=>");
         let right = children.get(ix + 1);
         match (left, current, right) {
@@ -187,6 +187,6 @@ pub fn parameter_level_normalize(parameters: Vec<backend::Ast>) -> Vec<backend::
         .join("")
         .split_whitespace()
         .map(ToOwned::to_owned)
-        .map(|x| backend::Ast::Content(Cow::Owned(x)))
+        .map(|x| backend::Ast::String(Cow::Owned(x)))
         .collect::<Vec<_>>()
 }

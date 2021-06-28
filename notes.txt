@@ -1,6 +1,0 @@
-\cmd{h1} {
-    ($xs:block) => $xs
-}
-\cmd{h2} {
-    ($xs:block) => $xs
-}

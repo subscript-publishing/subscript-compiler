@@ -9,6 +9,3 @@ pub fn compile_to_html(source: &str) -> String {
     crate::codegen::html::render_document(result)
 }
 
-pub fn yield_table_of_contents(source: &str) {
-    // crate::frontend::run_compiler_frontend(source)
-}

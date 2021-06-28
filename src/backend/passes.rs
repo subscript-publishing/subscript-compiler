@@ -19,7 +19,7 @@ use crate::backend::ast::ChildListTransformer;
 ///////////////////////////////////////////////////////////////////////////////
 
 
-pub fn match_and_apply_rewrite_rule<'a>(
+fn match_and_apply_rewrite_rule<'a>(
     pattern: Vec<Ast<'a>>,
     target: Vec<Ast<'a>>,
     children: Vec<Ast<'a>>,
@@ -47,17 +47,16 @@ pub fn match_and_apply_rewrite_rule<'a>(
 }
 
 
-pub fn child_list_passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
+fn child_list_passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
     // APPLY AFTER REMOVING ALL TOKENS
     fn merge_text_content<'a>(xs: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
         let mut results = Vec::new();
         for current in xs.into_iter() {
-            assert!(!current.is_token());
             let left = results
                 .last_mut()
-                .and_then(Ast::unpack_content_mut);
+                .and_then(Ast::unpack_string_mut);
             if let Some(left) = left {
-                if let Some(txt) = current.unpack_content() {
+                if let Some(txt) = current.unpack_string() {
                     *left = left.to_owned() + txt.to_owned();
                     continue;
                 }
@@ -88,7 +87,7 @@ pub fn child_list_passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
     }
 }
 
-pub fn node_passes<'a>(node: Ast<'a>) -> Ast<'a> {
+fn node_passes<'a>(node: Ast<'a>) -> Ast<'a> {
     fn apply_rewrite_rules<'a>(tag: Tag<'a>) -> Tag<'a> {
         let mut children = tag.children;
         for RewriteRule{from, to} in tag.rewrite_rules {
@@ -170,9 +169,8 @@ pub fn node_passes<'a>(node: Ast<'a>) -> Ast<'a> {
                 let tag = process_tags(tag);
                 Ast::Tag(tag)
             }
-            Ast::Token(tk) => Ast::Content(tk),
             node @ Ast::Enclosure(_) => node,
-            node @ Ast::Content(_) => node,
+            node @ Ast::String(_) => node,
             node @ Ast::Ident(_) => node,
         }
     };
@@ -180,7 +178,7 @@ pub fn node_passes<'a>(node: Ast<'a>) -> Ast<'a> {
 }
 
 
-pub fn passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
+fn passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
     let children = children
         .into_iter()
         .map(node_passes)
@@ -218,7 +216,7 @@ pub fn passes<'a>(children: Vec<Ast<'a>>) -> Vec<Ast<'a>> {
 
 use crate::codegen::html;
 
-pub fn node_to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
+fn node_to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
     fn enclosure<'a>(
         start: &'a str,
         children: Vec<Ast<'a>>,
@@ -257,10 +255,7 @@ pub fn node_to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
             .into_iter()
             .filter_map(|node| -> Option<Text<'a>> {
                 match node {
-                    Ast::Content(txt) if !txt.trim().is_empty() => {
-                        Some(Text(txt))
-                    }
-                    Ast::Token(txt) if !txt.trim().is_empty() => {
+                    Ast::String(txt) if !txt.trim().is_empty() => {
                         Some(Text(txt))
                     }
                     _ => None
@@ -335,10 +330,7 @@ pub fn node_to_html<'a>(node: Ast<'a>) -> html::Node<'a> {
             let node = Text::new("\\").append(Text(node));
             html::Node::Text(node)
         },
-        Ast::Content(node) => {
-            html::Node::Text(Text(node))
-        },
-        Ast::Token(node) => {
+        Ast::String(node) => {
             html::Node::Text(Text(node))
         },
     }

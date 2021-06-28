@@ -47,7 +47,7 @@ impl<'a> Tag<'a> {
     }
     pub fn insert_parameter(&mut self, value: &str) {
         let mut args = self.parameters.clone().unwrap_or(Vec::new());
-        args.push(Ast::Content(Cow::Owned(
+        args.push(Ast::String(Cow::Owned(
             value.to_owned()
         )));
         self.parameters = Some(args);
@@ -75,8 +75,7 @@ pub enum Ast<'a> {
     Enclosure(Enclosure<'a, Ast<'a>>),
     /// Some identifier not followed by a block. 
     Ident(Atom<'a>),
-    Content(Atom<'a>),
-    Token(Atom<'a>),
+    String(Atom<'a>),
 }
 
 impl<'a> Ast<'a> {
@@ -136,10 +135,7 @@ impl<'a> Ast<'a> {
             node @ Ast::Ident(_) => {
                 f(node)
             }
-            node @ Ast::Content(_) => {
-                f(node)
-            }
-            node @ Ast::Token(_) => {
+            node @ Ast::String(_) => {
                 f(node)
             }
         }
@@ -152,7 +148,7 @@ impl<'a> Ast<'a> {
     }
     pub fn get_string(&'a self) -> Option<Cow<'a, str>> {
         match self {
-            Ast::Content(cow) => Some(cow.clone()),
+            Ast::String(cow) => Some(cow.clone()),
             _ => None,
         }
     }
@@ -185,15 +181,9 @@ impl<'a> Ast<'a> {
             _ => false,
         }
     }
-    pub fn is_content(&self) -> bool {
+    pub fn is_string(&self) -> bool {
         match self {
-            Ast::Content(_) => true,
-            _ => false,
-        }
-    }
-    pub fn is_token(&self) -> bool {
-        match self {
-            Ast::Token(_) => true,
+            Ast::String(_) => true,
             _ => false,
         }
     }
@@ -221,21 +211,15 @@ impl<'a> Ast<'a> {
             _ => None,
         }
     }
-    pub fn unpack_content(&self) -> Option<&Atom<'a>> {
+    pub fn unpack_string(&self) -> Option<&Atom<'a>> {
         match self {
-            Ast::Content(x) => Some(x),
+            Ast::String(x) => Some(x),
             _ => None,
         }
     }
-    pub fn unpack_content_mut(&mut self) -> Option<&mut Atom<'a>> {
+    pub fn unpack_string_mut(&mut self) -> Option<&mut Atom<'a>> {
         match self {
-            Ast::Content(x) => Some(x),
-            _ => None,
-        }
-    }
-    pub fn unpack_token(&self) -> Option<&Atom<'a>> {
-        match self {
-            Ast::Token(x) => Some(x),
+            Ast::String(x) => Some(x),
             _ => None,
         }
     }
@@ -269,15 +253,9 @@ impl<'a> Ast<'a> {
             _ => None,
         }
     }
-    pub fn into_content(self) -> Option<Atom<'a>> {
+    pub fn into_string(self) -> Option<Atom<'a>> {
         match self {
-            Ast::Content(x) => Some(x),
-            _ => None,
-        }
-    }
-    pub fn into_token(self) -> Option<Atom<'a>> {
-        match self {
-            Ast::Token(x) => Some(x),
+            Ast::String(x) => Some(x),
             _ => None,
         }
     }
@@ -286,8 +264,7 @@ impl<'a> Ast<'a> {
     }
     pub fn is_whitespace(&self) -> bool {
         match self {
-            Ast::Content(node) => node == &" ",
-            Ast::Token(node) => node == &" ",
+            Ast::String(node) => node == &" ",
             _ => false
         }
     }
@@ -355,8 +332,7 @@ impl<'a> Ast<'a> {
                 }
             }
             Ast::Ident(x) => ident(x.clone()),
-            Ast::Content(x) => pack(x.clone()),
-            Ast::Token(x) => pack(x.clone()),
+            Ast::String(x) => pack(x.clone()),
         }
     }
     pub fn unblock(self) -> Vec<Self> {
@@ -445,25 +421,9 @@ impl<'a> Ast<'a> {
                 Ast::Enclosure(node)
             }
             node @ Ast::Ident(_) => {node}
-            node @ Ast::Content(_) => {node}
-            node @ Ast::Token(_) => {node}
+            node @ Ast::String(_) => {node}
         }
     }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// DEV
-///////////////////////////////////////////////////////////////////////////////
-
-pub(crate) fn dev() {
-    let source = include_str!("../../source.txt");
-    // let result = to_html_pipeline(source);
-    // let result = crate::backend::parser::run_parser(source);
-    // let result = crate::frontend::passes(result);
-    // for node in result {
-    //     println!("{:#?}", node);
-    // }
 }
 
 

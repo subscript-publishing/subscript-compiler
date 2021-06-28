@@ -68,8 +68,7 @@ pub fn query_heading_nodes<'a>(ast: &Ast<'a>) -> Vec<Heading> {
                     .collect::<Vec<_>>()
             }
             Ast::Ident(node) => Vec::new(),
-            Ast::Content(value) => Vec::new(),
-            Ast::Token(value) => Vec::new(),
+            Ast::String(value) => Vec::new(),
         }
     }
     go(ast)
