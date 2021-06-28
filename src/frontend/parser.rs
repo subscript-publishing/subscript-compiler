@@ -119,18 +119,18 @@ impl<'a> ParseTree<'a> {
                     ),
                     children: scope.children.into_iter().collect()
                 };
-                self.add_child_node(Node::Enclosure(Ann {
-                    start: scope.open_token.start,
-                    end: close_word.range.end,
-                    data: new_node,
-                }));
+                let range = {
+                    let start = scope.open_token.start();
+                    let end = close_word.range.end;
+                    CharRange::join(start, Some(end))
+                };
+                self.add_child_node(Node::Enclosure(Ann::join(range, new_node)));
             }
             None => {
-                let new_node = Node::InvalidToken(Ann{
-                    start: close_word.range.start,
-                    end: close_word.range.end,
-                    data: Cow::Borrowed(close_word.word),
-                });
+                let new_node = Node::InvalidToken(Ann::new(
+                    close_word.range,
+                    Cow::Borrowed(close_word.word),
+                ));
                 self.add_child_node(new_node);
             }
         }
@@ -147,11 +147,10 @@ impl<'a> ParseTree<'a> {
                     },
                     children: scope.children.into_iter().collect()
                 };
-                Node::Enclosure(Ann {
-                    start: scope.open_token.start,
-                    end: scope.open_token.end,
-                    data: enclosure,
-                })
+                Node::Enclosure(Ann::join(
+                    scope.open_token.range(),
+                    enclosure,
+                ))
             });
         finalized.extend(xs);
         finalized.into_iter().collect()
@@ -200,11 +199,10 @@ impl<'a> ParseTree<'a> {
                 Mode::BeginEnclosure {kind} => {
                     let start_pos = current.range.start;
                     let new_stack = PartialBlock {
-                        open_token: Ann {
-                            start: current.range.start,
-                            end: current.range.end,
-                            data: OpenToken::new(Cow::Borrowed(kind)).unwrap()
-                        },
+                        open_token: Ann::new(
+                            current.range,
+                            OpenToken::new(Cow::Borrowed(kind)).unwrap()
+                        ),
                         children: Default::default(),
                     };
                     parse_tree.open_new_enclosure(new_stack);
@@ -217,21 +215,20 @@ impl<'a> ParseTree<'a> {
                     let end = next
                         .map(|x| x.1.range.end)
                         .unwrap_or(current.range.end);
-                    let new_node = Node::Ident(Ann {
-                        start,
-                        end,
-                        data: Atom::Borrowed(ident)
-                    });
+                    let new_node = Node::Ident(Ann::new(
+                        CharRange::new(
+                            start,
+                            end,
+                        ),
+                        Atom::Borrowed(ident)
+                    ));
                     parse_tree.add_child_node(new_node);
                 }
                 Mode::NoOP => {
-                    let start = current.range.start;
-                    let end = current.range.end;
-                    let new_node = Node::String(Ann {
-                        start,
-                        end,
-                        data: Cow::Borrowed(current.word)
-                    });
+                    let new_node = Node::String(Ann::new(
+                        current.range,
+                        Cow::Borrowed(current.word)
+                    ));
                     parse_tree.add_child_node(new_node);
                 }
             }

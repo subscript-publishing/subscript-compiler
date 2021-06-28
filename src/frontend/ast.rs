@@ -34,6 +34,17 @@ pub struct CharRange {
 }
 
 impl CharRange {
+    pub fn join(start: Option<CharIndex>, end: Option<CharIndex>) -> Option<Self> {
+        if let Some(start) = start {
+            if let Some(end) = end {
+                return Some(CharRange{start, end})
+            }
+        }
+        None
+    }
+    pub fn new(start: CharIndex, end: CharIndex) -> Self {
+        CharRange{start, end}
+    }
     pub fn byte_index_range<'a>(&self, source: &'a str) -> Option<(usize, usize)> {
         fn find_utf8_end(s: &str, i: usize) -> Option<usize> {
             s.char_indices().nth(i).map(|(_, x)| x.len_utf8())
@@ -60,31 +71,47 @@ impl CharRange {
         }
     }
     pub fn into_annotated_tree<T>(self, data: T) -> Ann<T> {
-        Ann::from_range(self, data)
+        Ann {
+            range: Some(self),
+            data,
+        }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Ann<T> {
-    pub start: CharIndex,
-    pub end: CharIndex,
+    range: Option<CharRange>,
     pub data: T,
 }
 
 impl<T> Ann<T> {
-    pub fn from_range(range: CharRange, data: T) -> Self {
-        Ann {
-            start: range.start,
-            end: range.end,
-            data,
-        }
+    pub fn unannotated(data: T) -> Self {
+        let range = None;
+        Ann {range, data}
     }
-    pub fn into_char_range(&self) -> CharRange {
-        let start = self.start;
-        let end = self.end;
-        CharRange{start, end}
+    pub fn new(range: CharRange, data: T) -> Self {
+        Ann {range: Some(range), data}
+    }
+    pub fn join(range: Option<CharRange>, data: T) -> Self {
+        Ann {range, data}
+    }
+    pub fn range(&self) -> Option<CharRange> {
+        self.range
+    }
+    pub fn start(&self) -> Option<CharIndex> {
+        if let Some(range) = self.range {
+            return Some(range.start)
+        }
+        None
+    }
+    pub fn end(&self) -> Option<CharIndex> {
+        if let Some(range) = self.range {
+            return Some(range.end)
+        }
+        None
     }
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // AST
@@ -166,7 +193,7 @@ impl<'a> Node<'a> {
         match self {
             Node::Enclosure(node) => {
                 let is_fragment = node.data.kind == EnclosureKind::Fragment;
-                let range = node.into_char_range();
+                let range = node.range;
                 let kind = match node.data.kind {
                     EnclosureKind::CurlyBrace => HighlightKind::CurlyBrace,
                     EnclosureKind::SquareParen => HighlightKind::SquareParen,
@@ -210,7 +237,7 @@ impl<'a> Node<'a> {
                 }
             }
             Node::Ident(value) => {
-                let range = value.into_char_range();
+                let range = value.range;
                 let highlight = Highlight {
                     kind: HighlightKind::Ident(value.data),
                     range,
@@ -220,7 +247,7 @@ impl<'a> Node<'a> {
                 vec![highlight]
             }
             Node::InvalidToken(value) => {
-                let range = value.into_char_range();
+                let range = value.range;
                 let highlight = Highlight {
                     kind: HighlightKind::InvalidToken(value.data),
                     range,
@@ -233,26 +260,22 @@ impl<'a> Node<'a> {
         }
     }
     pub fn new_fragment(nodes: Vec<Self>) -> Self {
-        Node::Enclosure(Ann{
-            start: CharIndex::zero(),
-            end: CharIndex::zero(),
-            data: Enclosure {
-                kind: EnclosureKind::Fragment,
-                children: nodes,
-            }
-        })
+        let data = Enclosure {
+            kind: EnclosureKind::Fragment,
+            children: nodes,
+        };
+        Node::Enclosure(Ann::unannotated(data))
     }
     /// Unpacks an `Node::Enclosure` with the `Fragment` kind or
     /// returns a singleton vec.
     pub fn into_fragment(self) -> Vec<Self> {
         match self {
             Node::Enclosure(Ann{
-                start,
-                end,
                 data: Enclosure{
                     kind: EnclosureKind::Fragment,
                     children
-                }
+                },
+                ..
             }) => children,
             x => vec![x]
         }
@@ -266,7 +289,7 @@ impl<'a> Node<'a> {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Highlight<'a> {
-    pub range: CharRange,
+    pub range: Option<CharRange>,
     pub kind: HighlightKind<'a>,
     pub binder: Option<Atom<'a>>,
     pub nesting: Vec<Atom<'a>>,
