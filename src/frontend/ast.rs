@@ -1,12 +1,11 @@
 //! Frontend AST data types & related.
 use std::rc::Rc;
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
 use std::vec;
 use serde::{Serialize, Deserialize};
-use crate::backend;
-use crate::compiler::data::*;
+use crate::frontend::data::*;
 
 ///////////////////////////////////////////////////////////////////////////////
 // INDEXING DATA TYPES
@@ -110,8 +109,64 @@ impl<T> Ann<T> {
         }
         None
     }
+    pub fn map<U>(self, f: impl Fn(T) -> U) -> Ann<U> {
+        Ann {
+            range: self.range,
+            data: f(self.data),
+        }
+    }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// FRONTEND
+///////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug, Clone)]
+pub struct Tag<'a> {
+    pub name: Ann<Atom<'a>>,
+    pub parameters: Option<Vec<Node<'a>>>,
+    /// Each child node generally should be an `Enclosure` (with the `CurlyBrace` kind).
+    /// Until perhaps the codegen.
+    pub children: Vec<Node<'a>>,
+    pub rewrite_rules: Vec<RewriteRule<Node<'a>>>,
+}
+
+impl<'a> Tag<'a> {
+    /// Some tag with no parameters and just children.
+    pub fn new(name: Ann<&'a str>, children: Vec<Node<'a>>) -> Self {
+        Tag{
+            name: Ann {
+                range: name.range,
+                data: Cow::Borrowed(name.data)
+            },
+            parameters: None,
+            children,
+            rewrite_rules: Vec::new(),
+        }
+    }
+    pub fn has_name(&self, name: &str) -> bool {
+        return self.name() == name
+    }
+    pub fn insert_parameter(&mut self, value: Ann<&str>) {
+        let mut args = self.parameters.clone().unwrap_or(Vec::new());
+        args.push(Node::String(Ann::join(
+            value.range,
+            Cow::Owned(value.data.to_owned()),
+        )));
+        self.parameters = Some(args);
+    }
+    pub fn insert_unannotated_parameter(&mut self, value: &str) {
+        let mut args = self.parameters.clone().unwrap_or(Vec::new());
+        args.push(Node::String(Ann::unannotated(
+            Cow::Owned(value.to_owned())
+        )));
+        self.parameters = Some(args);
+    }
+    pub fn name(&self) -> &str {
+        &self.name.data
+    }
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // AST
@@ -119,6 +174,9 @@ impl<T> Ann<T> {
 
 #[derive(Debug, Clone)]
 pub enum Node<'a> {
+    /// The parser doesn’t emit AST `Tag` nodes. This is done in a later
+    /// processing phase.
+    Tag(Tag<'a>),
     /// Some identifier that may or may not be followed by square parentheses
     /// and/or a curly brace enclosure. E.g. `\name`.
     Ident(Ann<Atom<'a>>),
@@ -140,6 +198,70 @@ pub enum Node<'a> {
 
 
 impl<'a> Node<'a> {
+    /// Some tag with no parameters and just children.
+    pub fn new_tag(name: Ann<&'a str>, children: Vec<Node<'a>>) -> Self {
+        Node::Tag(Tag::new(name, children))
+    }
+    pub fn new_ident(str: Ann<&'a str>) -> Self {
+        Node::Ident(str.map(|x| Cow::Borrowed(x)))
+    }
+    pub fn new_enclosure(
+        range: CharRange,
+        kind: EnclosureKind<'a>,
+        children: Vec<Node<'a>>,
+    ) -> Self {
+        Node::Enclosure(Ann::new(range, Enclosure {kind, children}))
+    }
+    pub fn new_string(str: Ann<&'a str>) -> Self {
+        Node::Ident(str.map(|x| Cow::Borrowed(x)))
+    }
+    pub fn unannotated_tag(name: &'a str, children: Vec<Node<'a>>) -> Self {
+        Node::Tag(Tag::new(
+            Ann::unannotated(name),
+            children
+        ))
+    }
+    pub fn unannotated_tag_(name: &'a str, child: Node<'a>) -> Self {
+        Node::Tag(Tag::new(
+            Ann::unannotated(name),
+            vec![child]
+        ))
+    }
+    pub fn unannotated_ident(str: &'a str) -> Self {
+        Node::Ident(Ann::unannotated(Cow::Borrowed(str)))
+    }
+    pub fn unannotated_enclosure(
+        kind: EnclosureKind<'a>,
+        children: Vec<Node<'a>>,
+    ) -> Self {
+        Node::Enclosure(Ann::unannotated(Enclosure {kind, children}))
+    }
+    pub fn unannotated_string(str: &'a str) -> Self {
+        Node::String(Ann::unannotated(Cow::Borrowed(str)))
+    }
+
+    pub fn new_fragment(nodes: Vec<Self>) -> Self {
+        let data = Enclosure {
+            kind: EnclosureKind::Fragment,
+            children: nodes,
+        };
+        Node::Enclosure(Ann::unannotated(data))
+    }
+    pub fn is_whitespace(&self) -> bool {
+        match self {
+            Node::String(txt) => {
+                let x: &str = &txt.data;
+                x.trim().is_empty()
+            },
+            _ => false
+        }
+    }
+    pub fn is_tag(&self) -> bool {
+        match self {
+            Node::Tag(_) => true,
+            _ => false,
+        }
+    }
     pub fn is_ident(&self) -> bool {
         match self {
             Node::Ident(_) => true,
@@ -158,6 +280,78 @@ impl<'a> Node<'a> {
             _ => false,
         }
     }
+    pub fn is_any_enclosure(&self) -> bool {
+        match self {
+            Node::Enclosure(_) => true,
+            _ => false,
+        }
+    }
+    pub fn is_enclosure_of_kind(&self, k: EnclosureKind) -> bool {
+        match self {
+            Node::Enclosure(Ann{data: Enclosure{kind, ..}, ..}) => {
+                kind == &k
+            },
+            _ => false,
+        }
+    }
+    pub fn is_named_block(&self, name: &str) -> bool {
+        self.unwrap_tag()
+            .map(|x| *x.name.data == *name)
+            .unwrap_or(false)
+    }
+    pub fn get_string(&'a self) -> Option<Ann<Atom<'a>>> {
+        match self {
+            Node::String(cow) => Some(cow.clone()),
+            _ => None,
+        }
+    }
+    pub fn get_enclosure_children(&self, kind: EnclosureKind) -> Option<&Vec<Node<'a>>> {
+        match self {
+            Node::Enclosure(Ann{
+                data: x,
+                ..
+            }) if x.kind == kind => {
+                Some(x.children.as_ref())
+            }
+            _ => None,
+        }
+    }
+    pub fn unblock(self) -> Vec<Self> {
+        match self {
+            Node::Enclosure(
+                Ann{data: block, ..}
+            ) if block.kind == EnclosureKind::CurlyBrace => {
+                block.children
+            }
+            x => vec![x]
+        }
+    }
+    /// Unpacks an `Node::Enclosure` with the `Fragment` kind or
+    /// returns a singleton vec.
+    pub fn into_fragment(self) -> Vec<Self> {
+        match self {
+            Node::Enclosure(Ann{
+                data: Enclosure{
+                    kind: EnclosureKind::Fragment,
+                    children
+                },
+                ..
+            }) => children,
+            x => vec![x]
+        }
+    }
+    pub fn unwrap_tag(&self) -> Option<&Tag<'a>> {
+        match self {
+            Node::Tag(x) => Some(x),
+            _ => None,
+        }
+    }
+    pub fn unwrap_tag_mut(&mut self) -> Option<&mut Tag<'a>> {
+        match self {
+            Node::Tag(x) => Some(x),
+            _ => None,
+        }
+    }
     pub fn unwrap_ident<'b>(&'b self) -> Option<&'b Ann<Atom<'a>>> {
         match self {
             Node::Ident(x) => Some(x),
@@ -170,27 +364,143 @@ impl<'a> Node<'a> {
             _ => None,
         }
     }
+    pub fn unwrap_curly_brace<'b>(&'b self) -> Option<&'b Vec<Node<'a>>> {
+        match self {
+            Node::Enclosure(
+                Ann{data, ..}
+            ) if data.kind == EnclosureKind::CurlyBrace => Some(&data.children),
+            _ => None,
+        }
+    }
     pub fn unwrap_string<'b>(&'b self) -> Option<&'b Ann<Atom<'a>>> {
         match self {
             Node::String(x) => Some(x),
             _ => None,
         }
     }
-    pub fn is_whitespace(&self) -> bool {
+    pub fn unwrap_string_mut<'b>(&'b mut self) -> Option<&'b mut Ann<Atom<'a>>> {
         match self {
-            Node::String(txt) => {
-                let x: &str = &txt.data;
-                x.trim().is_empty()
-            },
-            _ => false
+            Node::String(x) => Some(x),
+            _ => None,
         }
     }
+    pub fn into_tag(self) -> Option<Tag<'a>> {
+        match self {
+            Node::Tag(x) => Some(x),
+            _ => None,
+        }
+    }
+
+    /// Bottom up 'node to ndoe' transformation.
+    pub fn transform<F: Fn(Node<'a>) -> Node<'a>>(self, f: Rc<F>) -> Self {
+        match self {
+            Node::Tag(node) => {
+                let children = node.children
+                    .into_iter()
+                    .map(|x| x.transform(f.clone()))
+                    .collect();
+                let rewrite_rules = node.rewrite_rules
+                    .into_iter()
+                    .map(|rule| -> RewriteRule<Node<'a>> {
+                        RewriteRule {
+                            from: rule.from.transform(f.clone()),
+                            to: rule.to.transform(f.clone()),
+                        }
+                    })
+                    .collect();
+                let node = Tag {
+                    name: node.name,
+                    parameters: node.parameters,
+                    children,
+                    rewrite_rules,
+                };
+                f(Node::Tag(node))
+            }
+            Node::Enclosure(node) => {
+                let kind = node.data.kind;
+                let range = node.range;
+                let children = node.data.children
+                    .into_iter()
+                    .map(|x| x.transform(f.clone()))
+                    .collect();
+                let data = Enclosure{
+                    kind,
+                    children,
+                };
+                let node = Node::Enclosure(Ann::join(range, data));
+                f(node)
+            }
+            node @ Node::Ident(_) => {
+                f(node)
+            }
+            node @ Node::String(_) => {
+                f(node)
+            }
+            node @ Node::InvalidToken(_) => {
+                f(node)
+            }
+        }
+    }
+    /// Bottom up transformation of AST child nodes within the same enclosure.
+    pub fn transform_children<F>(
+        self,
+        f: Rc<F>
+    ) -> Self where F: Fn(Vec<Node<'a>>) -> Vec<Node<'a>> {
+        match self {
+            Node::Tag(node) => {
+                let children = node.children
+                    .into_iter()
+                    .map(|x| -> Node {
+                        x.transform_children(f.clone())
+                    })
+                    .collect::<Vec<_>>();
+                let children = f(children);
+                let rewrite_rules = node.rewrite_rules
+                    .into_iter()
+                    .map(|rule| -> RewriteRule<Node<'a>> {
+                        RewriteRule {
+                            from: rule.from.transform_children(f.clone()),
+                            to: rule.to.transform_children(f.clone()),
+                        }
+                    })
+                    .collect();
+                let parameters = node.parameters;
+                let node = Tag {
+                    name: node.name,
+                    parameters,
+                    children,
+                    rewrite_rules,
+                };
+                Node::Tag(node)
+            }
+            Node::Enclosure(node) => {
+                let range = node.range();
+                let children = node.data.children
+                    .into_iter()
+                    .map(|x| x.transform_children(f.clone()))
+                    .collect();
+                let children = (f)(children);
+                let data = Enclosure{
+                    kind: node.data.kind,
+                    children,
+                };
+                Node::Enclosure(Ann::join(range, data))
+            }
+            node @ Node::Ident(_) => node,
+            node @ Node::String(_) => node,
+            node @ Node::InvalidToken(_) => node,
+        }
+    }
+    /// For syntax highlighting VIA the compiler frontend.
     pub fn into_highlight_ranges(
         self,
         nesting: Vec<Atom<'a>>,
         binder: Option<Atom<'a>>,
     ) -> Vec<Highlight<'a>> {
         match self {
+            Node::Tag(..) => {
+                unimplemented!()
+            }
             Node::Enclosure(node) => {
                 let is_fragment = node.data.kind == EnclosureKind::Fragment;
                 let range = node.range;
@@ -259,25 +569,113 @@ impl<'a> Node<'a> {
             Node::String(value) => Vec::new(),
         }
     }
-    pub fn new_fragment(nodes: Vec<Self>) -> Self {
-        let data = Enclosure {
-            kind: EnclosureKind::Fragment,
-            children: nodes,
-        };
-        Node::Enclosure(Ann::unannotated(data))
-    }
-    /// Unpacks an `Node::Enclosure` with the `Fragment` kind or
-    /// returns a singleton vec.
-    pub fn into_fragment(self) -> Vec<Self> {
+
+    pub fn to_string(&self) -> String {
+        fn pack<'a>(x: Cow<'a, str>) -> String {
+            match x {
+                Cow::Borrowed(x) => String::from(x),
+                Cow::Owned(x) => x,
+            }
+        }
+        fn ident<'a>(x: Cow<'a, str>) -> String {
+            let mut txt = pack(x);
+            txt.insert(0, '\\');
+            txt
+        }
+        fn enclosure<'a>(
+            start: Atom<'a>,
+            content: String,
+            end: Option<Atom<'a>>,
+        ) -> String {
+            let end = end
+                .map(|x| x.to_string())
+                .unwrap_or(String::new());
+            format!("{}{}{}", start, content, end)
+        }
+        fn enclosure_str<'a>(
+            start: &str,
+            content: String,
+            end: &str,
+        ) -> String {
+            format!("{}{}{}", start, content, end)
+        }
         match self {
-            Node::Enclosure(Ann{
-                data: Enclosure{
-                    kind: EnclosureKind::Fragment,
-                    children
-                },
-                ..
-            }) => children,
-            x => vec![x]
+            Node::Tag(tag) => {
+                let name = pack(tag.name.data.clone());
+                let children = tag.children
+                    .iter()
+                    .map(|x| x.to_string())
+                    .collect::<Vec<_>>()
+                    .join("");
+                format!("\\{}{}", name, children)
+            }
+            Node::Enclosure(Ann{data, ..}) => {
+                let children = data.children
+                    .iter()
+                    .map(|x| x.to_string())
+                    .collect::<Vec<_>>()
+                    .join("");
+                match data.kind.clone() {
+                    EnclosureKind::Fragment => {
+                        children
+                    }
+                    EnclosureKind::CurlyBrace => {
+                        enclosure_str("{", children, "}")
+                    }
+                    EnclosureKind::Parens => {
+                        enclosure_str("(", children, ")")
+                    }
+                    EnclosureKind::SquareParen => {
+                        enclosure_str("[", children, "]")
+                    }
+                    EnclosureKind::Error{open, close} => {
+                        enclosure(open, children, close)
+                    }
+                }
+            }
+            Node::Ident(x) => ident(x.data.clone()),
+            Node::String(x) => pack(x.data.clone()),
+            Node::InvalidToken(x) => pack(x.data.clone()),
+        }
+    }
+    pub fn syntactically_equal(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Node::Tag(x1), Node::Tag(x2)) => {
+                let check1 = x1.name() == x2.name();
+                let check2 = x1.children.len() == x2.children.len();
+                if check1 && check2 {
+                    return x1.children
+                        .iter()
+                        .zip(x2.children.iter())
+                        .all(|(x, y)| {
+                            x.syntactically_equal(y)
+                        })
+                }
+                false
+            }
+            (Node::Enclosure(x1), Node::Enclosure(x2)) => {
+                let check1 = x1.data.kind == x2.data.kind;
+                let check2 = x1.data.children.len() == x2.data.children.len();
+                if check1 && check2 {
+                    return x1.data.children
+                        .iter()
+                        .zip(x2.data.children.iter())
+                        .all(|(x, y)| {
+                            x.syntactically_equal(y)
+                        })
+                }
+                false
+            }
+            (Node::Ident(x1), Node::Ident(x2)) => {
+                &x1.data == &x2.data
+            }
+            (Node::String(x1), Node::String(x2)) => {
+                &x1.data == &x2.data
+            }
+            (Node::InvalidToken(x1), Node::InvalidToken(x2)) => {
+                &x1.data == &x2.data
+            }
+            (_, _) => unimplemented!()
         }
     }
 }

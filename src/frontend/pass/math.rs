@@ -8,14 +8,14 @@ use std::iter::FromIterator;
 use std::collections::HashSet;
 use std::rc::Rc;
 use std::borrow::Cow;
-use crate::compiler::data::{
+use crate::frontend::data::{
     Atom,
     Text,
     Enclosure,
     EnclosureKind,
     INLINE_MATH_TAG,
 };
-use crate::backend::{Ast, Tag};
+use crate::frontend::ast::{Ann, Node, Tag};
 
 pub static LATEX_ENVIRONMENT_NAME_LIST: &'static [&'static str] = &[
     "equation",
@@ -32,40 +32,41 @@ lazy_static! {
 
 
 /// Converts math nodes to a valid latex code within the AST data model.
-fn to_valid_latex_math<'a>(node: Ast<'a>) -> Ast<'a> {
+fn to_valid_latex_math<'a>(node: Node<'a>) -> Node<'a> {
     // HELPERS
-    fn init_env<'a>(env_name: &'a str, tag_name: Cow<'a, str>, children: Vec<Ast<'a>>) -> Ast<'a> {
-        Ast::new_fragment(vec![
-            Ast::Tag(Tag::new("begin", vec![
-                Ast::Enclosure(Enclosure::new_curly_brace(vec![
-                    Ast::String(Cow::Borrowed(env_name))
-                ]))
-            ])),
-            Ast::new_fragment(children),
-            Ast::Tag(Tag::new("end", vec![
-                Ast::Enclosure(Enclosure::new_curly_brace(vec![
-                    Ast::String(Cow::Borrowed(env_name))
-                ]))
-            ])),
+    fn init_env<'a>(env_name: &'a str, children: Vec<Node<'a>>) -> Node<'a> {
+        Node::new_fragment(vec![
+            Node::unannotated_tag_(
+                "begin",
+                Node::Enclosure(Ann::unannotated(
+                    Enclosure::new_curly_brace_(Node::unannotated_string(env_name))
+                ))
+            ),
+            Node::new_fragment(children),
+            Node::unannotated_tag_(
+                "end",
+                Node::Enclosure(Ann::unannotated(
+                    Enclosure::new_curly_brace_(Node::unannotated_string(env_name))
+                ))
+            ),
         ])
     }
     // FUNCTION
-    fn f<'a>(x: Ast<'a>) -> Ast<'a> {
+    fn f<'a>(x: Node<'a>) -> Node<'a> {
         match x {
-            Ast::Tag(tag) if LATEX_ENV_NAMES.contains(tag.name()) => {
+            Node::Tag(tag) if LATEX_ENV_NAMES.contains(tag.name()) => {
                 let env_name = *LATEX_ENV_NAMES.get(tag.name()).unwrap();
                 init_env(
                     env_name,
-                    tag.name.clone(),
                     tag.children
                 )
             }
-            Ast::Tag(mut tag) => {
+            Node::Tag(mut tag) => {
                 tag.children = tag.children
                     .into_iter()
-                    // .flat_map(Ast::unblock)
+                    // .flat_map(Node::unblock)
                     .collect();
-                Ast::Tag(tag)
+                Node::Tag(tag)
             }
             x => x,
         }
@@ -76,54 +77,55 @@ fn to_valid_latex_math<'a>(node: Ast<'a>) -> Ast<'a> {
 
 
 /// Entrypoint.
-pub fn latex_pass<'a>(node: Ast<'a>) -> Ast<'a> {
+pub fn latex_pass<'a>(node: Node<'a>) -> Node<'a> {
     match node {
-        Ast::Tag(tag) if tag.has_name("equation") => {
+        Node::Tag(tag) if tag.has_name("equation") => {
             let node = tag.children
                 .into_iter()
-                .flat_map(Ast::unblock)
+                .flat_map(Node::unblock)
                 .map(to_valid_latex_math)
                 .map(|x| x.to_string())
                 .collect::<Vec<_>>()
                 .join("");
             let start = "\\begin{equation}\\begin{split}";
             let end = "\\end{split}\\end{equation}";
-            Ast::String(Cow::Owned(format!(
+            Node::String(Ann::unannotated(Cow::Owned(format!(
                 "\\[{}{}{}\\]",
                 start,
                 node,
                 end,
-            )))
+            ))))
         }
-        Ast::Tag(tag) if tag.has_name(INLINE_MATH_TAG) => {
+        Node::Tag(tag) if tag.has_name(INLINE_MATH_TAG) => {
             let node = tag.children
                 .into_iter()
-                // .flat_map(Ast::unblock)
+                .flat_map(Node::unblock)
                 .map(to_valid_latex_math)
                 .map(|x| x.to_string())
                 .collect::<Vec<_>>()
                 .join("");
-            Ast::String(Cow::Owned(format!(
+            Node::String(Ann::unannotated(Cow::Owned(format!(
                 "\\({}\\)",
                 node,
-            )))
+            ))))
         }
-        Ast::Tag(mut tag) => {
+        Node::Tag(mut tag) => {
             tag.children = tag.children
                 .into_iter()
                 .map(latex_pass)
                 .collect();
-            Ast::Tag(tag)
+            Node::Tag(tag)
         }
-        Ast::Enclosure(mut block) => {
-            block.children = block.children
+        Node::Enclosure(mut block) => {
+            block.data.children = block.data.children
                 .into_iter()
                 .map(latex_pass)
                 .collect();
-            Ast::Enclosure(block)
+            Node::Enclosure(block)
         }
-        node @ Ast::Ident(_) => node,
-        node @ Ast::String(_) => node,
+        node @ Node::Ident(_) => node,
+        node @ Node::String(_) => node,
+        node @ Node::InvalidToken(_) => node,
     }
 }
 

@@ -172,11 +172,17 @@ impl<'a, T> Enclosure<'a, T> {
     }
 }
 
-impl<'a> Enclosure<'a, crate::backend::Ast<'a>> {
-    pub fn new_curly_brace(children: Vec<crate::backend::Ast<'a>>) -> Self {
+impl<'a, T> Enclosure<'a, T> {
+    pub fn new_curly_brace(children: Vec<T>) -> Self {
         Enclosure {
             kind: EnclosureKind::CurlyBrace,
             children
+        }
+    }
+    pub fn new_curly_brace_(child: T) -> Self {
+        Enclosure {
+            kind: EnclosureKind::CurlyBrace,
+            children: vec![child]
         }
     }
 }

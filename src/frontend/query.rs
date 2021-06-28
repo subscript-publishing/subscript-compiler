@@ -1,10 +1,10 @@
-//! AST transformations.
+//! Node transformations.
 use std::iter::FromIterator;
 use std::collections::{HashSet, HashMap};
 use std::rc::Rc;
 use std::borrow::Cow;
 use serde::{Serialize, Deserialize};
-use crate::compiler::data::{
+use crate::frontend::data::{
     Atom,
     Text,
     Enclosure,
@@ -12,8 +12,7 @@ use crate::compiler::data::{
     INLINE_MATH_TAG,
     RewriteRule,
 };
-use crate::backend::{Ast, Tag};
-use crate::backend::ast::ChildListTransformer;
+use crate::frontend::ast::{Node, Tag};
 
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -46,38 +45,39 @@ pub struct Heading {
     text: String,
 }
 
-pub fn query_heading_nodes<'a>(ast: &Ast<'a>) -> Vec<Heading> {
-    pub fn go<'a>(ast: &Ast<'a>) -> Vec<Tag<'a>> {
-        match ast {
-            Ast::Tag(tag) if tag.has_name("h1") => vec![tag.clone()],
-            Ast::Tag(tag) if tag.has_name("h2") => vec![tag.clone()],
-            Ast::Tag(tag) if tag.has_name("h3") => vec![tag.clone()],
-            Ast::Tag(tag) if tag.has_name("h4") => vec![tag.clone()],
-            Ast::Tag(tag) if tag.has_name("h5") => vec![tag.clone()],
-            Ast::Tag(tag) if tag.has_name("h6") => vec![tag.clone()],
-            Ast::Tag(node) => {
+pub fn query_heading_nodes<'a>(node: &Node<'a>) -> Vec<Heading> {
+    pub fn go<'a>(node: &Node<'a>) -> Vec<Tag<'a>> {
+        match node {
+            Node::Tag(tag) if tag.has_name("h1") => vec![tag.clone()],
+            Node::Tag(tag) if tag.has_name("h2") => vec![tag.clone()],
+            Node::Tag(tag) if tag.has_name("h3") => vec![tag.clone()],
+            Node::Tag(tag) if tag.has_name("h4") => vec![tag.clone()],
+            Node::Tag(tag) if tag.has_name("h5") => vec![tag.clone()],
+            Node::Tag(tag) if tag.has_name("h6") => vec![tag.clone()],
+            Node::Tag(node) => {
                 node.children
                     .iter()
                     .flat_map(go)
                     .collect::<Vec<_>>()
             }
-            Ast::Enclosure(node) => {
-                node.children
+            Node::Enclosure(node) => {
+                node.data.children
                     .iter()
                     .flat_map(go)
                     .collect::<Vec<_>>()
             }
-            Ast::Ident(node) => Vec::new(),
-            Ast::String(value) => Vec::new(),
+            Node::Ident(..) => Vec::new(),
+            Node::String(..) => Vec::new(),
+            Node::InvalidToken(..) => Vec::new(),
         }
     }
-    go(ast)
+    go(node)
         .into_iter()
         .map(|tag| {
             let kind = HeadingKind::from_str(tag.name()).unwrap();
             let text = tag.children
                 .iter()
-                .map(Ast::to_string)
+                .map(Node::to_string)
                 .collect::<Vec<_>>()
                 .join(" ");
             Heading{kind, text}

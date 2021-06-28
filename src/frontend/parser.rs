@@ -11,8 +11,7 @@ use std::vec;
 use serde::de::value;
 use unicode_segmentation::UnicodeSegmentation;
 
-use crate::backend;
-use crate::compiler::data::*;
+use crate::frontend::data::*;
 use crate::frontend::ast::*;
 
 
@@ -421,7 +420,7 @@ pub fn init_words<'a>(source: &'a str, chars: Vec<Character<'a>>) -> Vec<Word<'a
 fn match_word<'a>(current: &'a str, next: Option<&'a str>) -> (Mode<'a>, ZipperConsumed) {
     match (current, next) {
         ("\\", Some(next)) if next == "{"  => (
-            Mode::Ident(crate::compiler::data::INLINE_MATH_TAG),
+            Mode::Ident(INLINE_MATH_TAG),
             ZipperConsumed::Current,
         ),
         ("\\", Some(ident)) if !is_token(ident) && ident != " " => (
