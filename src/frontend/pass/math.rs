@@ -39,14 +39,14 @@ fn to_valid_latex_math<'a>(node: Node<'a>) -> Node<'a> {
             Node::unannotated_tag_(
                 "begin",
                 Node::Enclosure(Ann::unannotated(
-                    Enclosure::new_curly_brace_(Node::unannotated_string(env_name))
+                    Enclosure::new_curly_brace_(Node::unannotated_str(env_name))
                 ))
             ),
             Node::new_fragment(children),
             Node::unannotated_tag_(
                 "end",
                 Node::Enclosure(Ann::unannotated(
-                    Enclosure::new_curly_brace_(Node::unannotated_string(env_name))
+                    Enclosure::new_curly_brace_(Node::unannotated_str(env_name))
                 ))
             ),
         ])

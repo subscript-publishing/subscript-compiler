@@ -11,7 +11,7 @@ use crate::codegen::html;
 
 /// Ensure that `Node` is first canonicalized!
 /// - I.e. make sure the inputs have been passes through the `html_canonicalization` function.
-fn node_to_html<'a>(node: Node<'a>) -> html::Node<'a> {
+pub(crate) fn node_to_html<'a>(node: Node<'a>) -> html::Node<'a> {
     fn enclosure<'a>(
         start: &'a str,
         children: Vec<Node<'a>>,
@@ -133,14 +133,4 @@ fn node_to_html<'a>(node: Node<'a>) -> html::Node<'a> {
     }
 }
 
-pub fn compile_to_html(source: &str) -> String {
-    let nodes = crate::frontend::pass::pp_normalize::run_compiler_frontend(source);
-    let nodes = pass::html_normalize::html_canonicalization(nodes);
-    let nodes = nodes
-        .into_iter()
-        .map(pass::math::latex_pass)
-        .map(node_to_html)
-        .collect::<Vec<_>>();
-    crate::codegen::html::render_document(nodes)
-}
 

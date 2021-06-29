@@ -1,4 +1,5 @@
 //! Frontend AST data types & related.
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::borrow::{Borrow, Cow};
 use std::collections::{HashSet, VecDeque, LinkedList};
@@ -163,22 +164,32 @@ impl<'a> Tag<'a> {
         )));
         self.parameters = Some(args);
     }
+    // /// Short for `Tag::insert_unannotated_parameter`
+    // pub fn insert_attr(&mut self, value: &str) {
+    //     self.insert_unannotated_parameter(value)
+    // }
     pub fn name(&self) -> &str {
         &self.name.data
+    }
+    pub fn to_string(&self) -> String {
+        Node::Tag(self.clone()).to_string()
+    }
+    pub fn is_heading_node(&self) -> bool {
+        HEADING_TAG_NAMES.contains(self.name())
     }
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct NodeEnvironment<'a> {
-    nesting: Vec<Atom<'a>>,
+    pub parents: Vec<Atom<'a>>,
 }
 
 impl<'a> NodeEnvironment<'a> {
     pub fn push_parent(&mut self, name: Atom<'a>) {
-        self.nesting.push(name)
+        self.parents.push(name)
     }
     pub fn is_math_env(&self) -> bool {
-        self.nesting
+        self.parents
             .iter()
             .any(|x| {
                 let option1 = x == INLINE_MATH_TAG;
@@ -262,8 +273,11 @@ impl<'a> Node<'a> {
     ) -> Self {
         Node::Enclosure(Ann::unannotated(Enclosure {kind, children}))
     }
-    pub fn unannotated_string(str: &'a str) -> Self {
+    pub fn unannotated_str(str: &'a str) -> Self {
         Node::String(Ann::unannotated(Cow::Borrowed(str)))
+    }
+    pub fn unannotated_string(str: String) -> Self {
+        Node::String(Ann::unannotated(Cow::Owned(str)))
     }
 
     pub fn new_fragment(nodes: Vec<Self>) -> Self {
@@ -468,6 +482,106 @@ impl<'a> Node<'a> {
             }
             node @ Node::InvalidToken(_) => {
                 f(env.clone(), node)
+            }
+        }
+    }
+    // pub fn transform_unit<U: Clone, F: Fn(NodeEnvironment<'a>, &Node<'a>) -> U>(
+    //     &self,
+    //     mut env: NodeEnvironment<'a>, f: Rc<F>
+    // ) -> Vec<U> {
+    //     match self {
+    //         Node::Tag(node) => {
+    //             env.push_parent(node.name.data.clone());
+    //             let children = node.children
+    //                 .into_iter()
+    //                 .flat_map(|x| x.transform_unit(env.clone(), f.clone()))
+    //                 .collect::<Vec<U>>();
+    //             let rewrite_rules = node.rewrite_rules
+    //                 .into_iter()
+    //                 .flat_map(|rule| {
+    //                     let from = rule.from.transform_unit(env.clone(), f.clone());
+    //                     let to = rule.to.transform_unit(env.clone(), f.clone());
+    //                     vec![from, to].concat()
+    //                 })
+    //                 .collect::<Vec<U>>();
+    //             let node = f(env.clone(), &Node::Tag(node.clone()));
+    //             vec![children, rewrite_rules, node].concat()
+    //         }
+    //         Node::Enclosure(node) => {
+    //             let kind = node.data.kind;
+    //             let range = node.range;
+    //             let children = node.data.children
+    //                 .into_iter()
+    //                 .map(|x| x.transform_unit(env.clone(), f.clone()))
+    //                 .collect();
+    //             let data = Enclosure{
+    //                 kind,
+    //                 children,
+    //             };
+    //             let node = Node::Enclosure(Ann::join(range, data));
+    //             f(env.clone(), node)
+    //         }
+    //         node @ Node::Ident(_) => {
+    //             f(env.clone(), node)
+    //         }
+    //         node @ Node::String(_) => {
+    //             f(env.clone(), node)
+    //         }
+    //         node @ Node::InvalidToken(_) => {
+    //             f(env.clone(), node)
+    //         }
+    //     }
+    // }
+    pub fn transform_mut<F: FnMut(NodeEnvironment<'a>, Node<'a>) -> Node<'a>>(
+        self,
+        mut env: NodeEnvironment<'a>, f: Rc<RefCell<F>>
+    ) -> Self {
+        match self {
+            Node::Tag(node) => {
+                env.push_parent(node.name.data.clone());
+                let children = node.children
+                    .into_iter()
+                    .map(|x| x.transform_mut(env.clone(), f.clone()))
+                    .collect();
+                let rewrite_rules = node.rewrite_rules
+                    .into_iter()
+                    .map(|rule| -> RewriteRule<Node<'a>> {
+                        RewriteRule {
+                            from: rule.from.transform_mut(env.clone(), f.clone()),
+                            to: rule.to.transform_mut(env.clone(), f.clone()),
+                        }
+                    })
+                    .collect();
+                let node = Tag {
+                    name: node.name,
+                    parameters: node.parameters,
+                    children,
+                    rewrite_rules,
+                };
+                (f.borrow_mut())(env.clone(), Node::Tag(node))
+            }
+            Node::Enclosure(node) => {
+                let kind = node.data.kind;
+                let range = node.range;
+                let children = node.data.children
+                    .into_iter()
+                    .map(|x| x.transform_mut(env.clone(), f.clone()))
+                    .collect();
+                let data = Enclosure{
+                    kind,
+                    children,
+                };
+                let node = Node::Enclosure(Ann::join(range, data));
+                (f.borrow_mut())(env.clone(), node)
+            }
+            node @ Node::Ident(_) => {
+                (f.borrow_mut())(env.clone(), node)
+            }
+            node @ Node::String(_) => {
+                (f.borrow_mut())(env.clone(), node)
+            }
+            node @ Node::InvalidToken(_) => {
+                (f.borrow_mut())(env.clone(), node)
             }
         }
     }
@@ -706,6 +820,21 @@ impl<'a> Node<'a> {
                 &x1.data == &x2.data
             }
             (_, _) => unimplemented!()
+        }
+    }
+    /// Push to a fragment or tag node.
+    /// TODO: Should we also push to any `EnclosureKind`?
+    pub fn push_child(self, child: Self) -> Self {
+        match self {
+            Node::Enclosure(mut node) if node.data.is_fragment() => {
+                node.data.children.push(child);
+                Node::Enclosure(node)
+            }
+            Node::Tag(mut tag) => {
+                tag.children.push(child);
+                Node::Tag(tag)
+            }
+            x => Node::new_fragment(vec![x, child])
         }
     }
 }

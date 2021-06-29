@@ -2,12 +2,25 @@
 use std::borrow::Cow;
 use std::collections::{HashSet, VecDeque, LinkedList};
 use std::iter::FromIterator;
+use lazy_static::lazy_static;
 
 
 pub static INLINE_MATH_TAG: &'static str = "[inline-math]";
 pub static BLOCK_MATH_TAGS: &[&'static str] = &[
     "equation",
 ];
+
+
+lazy_static! {
+    pub static ref HEADING_TAG_NAMES: HashSet<&'static str> = HashSet::from_iter(vec![
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+    ]);
+}
 
 pub static ALL_SUBSCRIPT_TAGS: &[&'static str] = &[
     "note",
@@ -306,6 +319,12 @@ impl<'a, T> Enclosure<'a, T> {
     pub fn is_error(&self) -> bool {
         match self.kind {
             EnclosureKind::Error{..} => true,
+            _ => false,
+        }
+    }
+    pub fn is_fragment(&self) -> bool {
+        match self.kind {
+            EnclosureKind::Fragment{..} => true,
             _ => false,
         }
     }

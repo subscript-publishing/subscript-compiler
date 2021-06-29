@@ -3,6 +3,7 @@
 
 fn main() {
     let source = include_str!("./source/electrical-engineering.txt");
-    let html = subscript_compiler::frontend::pass::to_html::compile_to_html(source);
-    println!("{}", html);
+    let output = subscript_compiler::codegen::html::Document::from_source(source);
+    let output = output.render_to_string();
+    println!("{}", output);
 }

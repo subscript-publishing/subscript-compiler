@@ -126,17 +126,50 @@ impl<'a> Node<'a> {
 
 
 /// Render the entire document.
-pub fn render_document<'a>(html: Vec<Node<'a>>) -> String {
-    let body = html
-        .into_iter()
-        .map(Node::to_html_str)
-        .map(|x| x.0)
-        .collect::<Vec<_>>()
-        .join("\n");
-    let html = String::from(include_str!("../../assets/template.html"));
-    let html = html.replace("<!--{{deps}}-->", include_str!("../../assets/deps.html"));
-    let html = html.replace("/*{{css}}*/", include_str!("../../assets/styling.css"));
-    html.replace("<!--{{body}}-->", &body)
+#[derive(Debug, Clone)]
+pub struct Document<'a> {
+    pub toc: Node<'a>,
+    pub body: Vec<Node<'a>>
+}
+
+impl<'a> Document<'a> {
+    pub fn from_source(source: &'a str) -> Document<'a> {
+        let body = crate::frontend::pass::pp_normalize::run_compiler_frontend(source);
+        let body = crate::frontend::pass::html_normalize::html_canonicalization(body);
+        let body = body
+            .into_iter()
+            .map(crate::frontend::pass::math::latex_pass)
+            .collect::<Vec<_>>();
+        let toc = crate::frontend
+            ::pass
+            ::html_normalize
+            ::generate_table_of_contents_tree(
+                &crate::frontend::ast::Node::new_fragment(body.clone())
+            );
+        let toc = crate::frontend::pass::to_html::node_to_html(
+            crate::frontend::pass::math::latex_pass(toc)
+        );
+        let body = body
+            .into_iter()
+            .map(crate::frontend::pass::html_normalize::annotate_heading_nodes)
+            .map(crate::frontend::pass::to_html::node_to_html)
+            .collect::<Vec<_>>();
+        Document{toc, body}
+    }
+    pub fn render_to_string(self) -> String {
+        let toc = self.toc.to_html_str().to_string();
+        let body = self.body
+            .into_iter()
+            .map(Node::to_html_str)
+            .map(|x| x.0)
+            .collect::<Vec<_>>()
+            .join("\n");
+        String::from(include_str!("../../assets/template.html"))
+            .replace("<!--{{deps}}-->", include_str!("../../assets/deps.html"))
+            .replace("/*{{css}}*/", include_str!("../../assets/styling.css"))
+            .replace("<!--{{toc}}-->", &toc)
+            .replace("<!--{{body}}-->", &body)
+    }
 }
 
 

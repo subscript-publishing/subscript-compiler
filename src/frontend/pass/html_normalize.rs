@@ -6,13 +6,123 @@
 use std::iter::FromIterator;
 use std::collections::{HashSet, HashMap};
 use std::rc::Rc;
+use std::cell::RefCell;
 use std::borrow::Cow;
+use either::Either;
 use crate::frontend::data::*;
 use crate::frontend::ast::*;
 
+///////////////////////////////////////////////////////////////////////////////
+// TABLE OF CONTENTS
+///////////////////////////////////////////////////////////////////////////////
+
+fn generate_toc_heading_id_from_child_nodes<'a>(children: &Vec<Node<'a>>) -> String {
+    use pct_str::PctStr;
+    let contents = generate_toc_heading_title_from_child_nodes(children);
+    let pct_str = PctStr::new(&contents).unwrap();
+    pct_str.as_str().to_owned()
+}
+
+fn generate_toc_heading_title_from_child_nodes<'a>(children: &Vec<Node<'a>>) -> String {
+    children.iter()
+        .map(Node::to_string)
+        .collect::<Vec<_>>()
+        .join("")
+}
+
+fn get_headings<'a>(node: &Node<'a>) -> Vec<(Vec<String>, String, String, String)> {
+    let headings = Rc::new(RefCell::new(Vec::new()));
+    let f = {
+        let headings = headings.clone();
+        move |env: NodeEnvironment<'a>, node: Node<'a>| {
+            match &node {
+                Node::Tag(tag) if tag.is_heading_node() => {
+                    let id = generate_toc_heading_id_from_child_nodes(&tag.children);
+                    let parents = env.parents
+                        .into_iter()
+                        .map(|x| x.to_string())
+                        .collect::<Vec<_>>()
+                        .clone();
+                    let name = tag.name.data.to_string();
+                    let text = tag.children
+                        .iter()
+                        .flat_map(|x| x.clone().unblock())
+                        .map(|x| x.to_string())
+                        .collect::<Vec<_>>()
+                        .join("");
+                    headings.borrow_mut().push((parents, name, text, id));
+                }
+                _ => ()
+            }
+            node
+        }
+    };
+    let _ = node.clone().transform(
+        NodeEnvironment::default(),
+        Rc::new(f),
+    );
+    let info = headings
+        .clone()
+        .borrow()
+        .iter()
+        .map(|x| {
+            x.clone()
+        })
+        .collect::<Vec<_>>();
+    info
+}
+
+pub(crate) fn generate_table_of_contents_tree<'a>(input: &Node<'a>) -> Node<'a> {
+    let children = get_headings(input)
+        .into_iter()
+        .map(|(parents, ty, contents, id)| {
+            let mut a = Tag::new(
+                Ann::unannotated("a"),
+                vec![Node::unannotated_string(contents)]
+            );
+            a.insert_unannotated_parameter(
+                &format!("href=#{}", id)
+            );
+            let a = Node::Tag(a);
+            let mut li = Tag::new(
+                Ann::unannotated("li"),
+                vec![a]
+            );
+            li.insert_unannotated_parameter(
+                &format!("type={}", ty)
+            );
+            let li = Node::Tag(li);
+            li
+        })
+        .collect::<Vec<_>>();
+    let mut tag = Tag::new(
+        Ann::unannotated("ul"),
+        children
+    );
+    tag.insert_unannotated_parameter("id=toc");
+    let node = Node::Tag(tag);
+    node
+}
+
+pub fn annotate_heading_nodes<'a>(input: Node<'a>) -> Node<'a> {
+    let f = |env: NodeEnvironment, node: Node<'a>| -> Node<'a> {
+        match node {
+            Node::Tag(mut tag) if tag.is_heading_node() => {
+                let id = generate_toc_heading_id_from_child_nodes(&tag.children);
+                tag.insert_unannotated_parameter(
+                    &format!("id={}", id)
+                );
+                Node::Tag(tag)
+            }
+            x => x,
+        }
+    };
+    input.transform(NodeEnvironment::default(), Rc::new(f))
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
-// AST-TO-AST PASSES
+// WHERE TAG PROCESSING
 ///////////////////////////////////////////////////////////////////////////////
 
 /// This is where we expand the patterns defined in `\!where` tags.
@@ -41,6 +151,11 @@ fn match_and_apply_rewrite_rule<'a>(
     left.extend(current);
     left
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// AST-TO-AST PASSES
+///////////////////////////////////////////////////////////////////////////////
 
 /// All compiler passes for same scope children.
 fn child_list_passes<'a>(children: Vec<Node<'a>>) -> Vec<Node<'a>> {

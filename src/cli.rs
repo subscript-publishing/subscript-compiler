@@ -30,7 +30,9 @@ pub fn run_cli() {
             if let Some(parent) = output_path.parent() {
                 let _ = std::fs::create_dir_all(parent);
             }
-            let output = crate::frontend::pass::to_html::compile_to_html(&source);
+            // let output = crate::frontend::pass::to_html::compile_to_html(&source);
+            let output = crate::codegen::html::Document::from_source(&source);
+            let output = output.render_to_string();
             std::fs::write(&output_path, output).unwrap();
         }
     }
