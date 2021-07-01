@@ -8,6 +8,7 @@ use std::collections::{HashSet, HashMap};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::borrow::Cow;
+use std::convert::TryFrom;
 use either::Either;
 use crate::frontend::data::*;
 use crate::frontend::ast::*;
@@ -226,7 +227,23 @@ fn node_passes<'a>(node: Node<'a>) -> Node<'a> {
         if name == "note" {
             tag.name = Ann::unannotated(Cow::Borrowed("div"));
             tag.insert_unannotated_parameter("macro=note");
-        } else if name == "layout" {
+        }
+        else if name == "img" {
+            let value = tag
+                .get_parameter("width")
+                .map(|x| x.data)
+                .and_then(|x| {
+                    let x: &str = &x;
+                    x.parse::<f32>().ok()
+                });
+            if let Some(width) = value {
+                tag.insert_unannotated_parameter(&format!(
+                    "style='width:{};'",
+                    width
+                ));
+            }
+        }
+        else if name == "layout" {
             tag.name = Ann::unannotated(Cow::Borrowed("div"));
             tag.insert_unannotated_parameter("macro=layout");
         }

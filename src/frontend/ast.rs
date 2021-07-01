@@ -168,6 +168,22 @@ impl<'a> Tag<'a> {
     // pub fn insert_attr(&mut self, value: &str) {
     //     self.insert_unannotated_parameter(value)
     // }
+    pub fn get_parameter(&self, key: &str) -> Option<Ann<Atom<'a>>> {
+        self.parameters
+            .as_ref()
+            .unwrap_or(&Vec::new())
+            .iter()
+            .filter_map(Node::unwrap_string)
+            .find(|x| {
+                let str: &str = &x.data;
+                let str = str
+                    .split_once("=")
+                    .map(|(x, _)| x)
+                    .unwrap_or(str);
+                return str.trim() == key
+            })
+            .map(Clone::clone)
+    }
     pub fn name(&self) -> &str {
         &self.name.data
     }

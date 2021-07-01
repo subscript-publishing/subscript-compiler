@@ -78,9 +78,15 @@ impl<'a> Node<'a> {
                     .into_iter()
                     .map(|(left, right)| -> String {
                         let mut result = String::new();
-                        result.push_str(&format!("{}", left.0));
+                        let key: &str = &left.0;
+                        let value: &str = &right.0;
+                        let value = value.strip_prefix("\'").unwrap_or(value);
+                        let value = value.strip_prefix("\"").unwrap_or(value);
+                        let value = value.strip_suffix("\'").unwrap_or(value);
+                        let value = value.strip_suffix("\"").unwrap_or(value);
+                        result.push_str(key);
                         result.push_str("=");
-                        result.push_str(&format!("{:?}", right.0));
+                        result.push_str(&format!("{:?}", value));
                         result
                     })
                     .collect::<Vec<_>>()
