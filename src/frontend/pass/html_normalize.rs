@@ -238,9 +238,14 @@ fn node_passes<'a>(node: Node<'a>) -> Node<'a> {
                 });
             if let Some(width) = value {
                 tag.insert_unannotated_parameter(&format!(
-                    "style='width:{};'",
+                    "style='width:{}px;'",
                     width
                 ));
+            } else {
+                println!(
+                    "[WARNING!] invalid width tag; given {:?}",
+                    tag.get_parameter("width")
+                );
             }
         }
         else if name == "layout" {
