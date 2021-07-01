@@ -234,7 +234,11 @@ fn node_passes<'a>(node: Node<'a>) -> Node<'a> {
                 .map(|x| x.data)
                 .and_then(|x| {
                     let x: &str = &x;
-                    x.parse::<f32>().ok()
+                    let x = x.split_once("=").map(|x| x.1);
+                    if let Some(x) = x {
+                        return x.parse::<f32>().ok()
+                    }
+                    None
                 });
             if let Some(width) = value {
                 tag.insert_unannotated_parameter(&format!(
