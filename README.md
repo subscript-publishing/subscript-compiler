@@ -20,6 +20,8 @@ custom syntax highlighting based on parsing the source code into an AST which ha
 more contextual information and therefore I could -for instance- highlight opening and
 closing braces based on the indentation level (i.e. see attached image).
 
+Also the parser implementation [over here](https://github.com/subscript-publishing/subscript-compiler/blob/main/src/frontend/parser.rs) (i.e. `src/frontend/parser`) may be interesting or impressive.
+
 
 
 ## Example
