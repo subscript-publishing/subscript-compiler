@@ -4,6 +4,24 @@ Not yet ready for public consumption; please check back in a couple of months.
 
 Ideally this will be usable for school this coming fall. 
 
+# NOTE
+
+Implementation wise, there is a lot here that you may not necessarily see.
+
+For instance this was used in an IOS iPad app experiment, as you can see in the old photo.
+
+![Old Screenshot](assets/old-screenshot.jpg)
+
+As you can see in the above screenshot, syntax highlighting in Swift was calling out to rust over a C FFI that
+transmitted source code span offsets that swift would then render. 
+
+Overall, most syntax highlighting is based on simple patterns, but in here I was playing with
+custom syntax highlighting based on parsing the source code into an AST which has much
+more contextual information and therefore I could -for instance- highlight opening and
+closing braces based on the indentation level (i.e. see attached image).
+
+
+
 ## Example
 
 The end result of the following example will be similar to what you see [over here](https://colbyn.github.io/school-notes-spring-2020).
